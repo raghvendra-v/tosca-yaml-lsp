@@ -3,9 +3,15 @@
  */
 package org.ezyaml.lang.tosca
 
+import org.ezyaml.lang.tosca.parser.antlr.lexer.jflex.JFlexBasedEOFAwareYamlLexer
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
  */
 class YamlRuntimeModule extends AbstractYamlRuntimeModule {
+	
+	override bindInternalYamlLexer() {
+		return JFlexBasedEOFAwareYamlLexer;
+	}
+	
 }

@@ -3,9 +3,11 @@
  */
 package org.ezyaml.lang.tosca.ide
 
-
 /**
  * Use this class to register ide components.
  */
 class YamlIdeModule extends AbstractYamlIdeModule {
+
+
+	
 }

@@ -21,890 +21,566 @@ class YamlParsingTest {
 	@Test
 	def void loadModel() {
 		val result = parseHelper.parse(
-''' definitions:
-   NsdInfo:
-      type: "object"
-      required:
-      - "id"    
-      - "nsdOnboardingState"
-      - "nsdOperationalState"
-      - "nsdUsageState"
-      - "_links"
-      properties:
-        id:
-          description: >
-            Identifier of the on boarded individual NS descriptor
-            resource. This identifier is allocated by the NFVO.  
+'''definitions:
+  CreatePmJobRequest:
+    description: >
+      This type represents a request to create a PM job. 
+      It shall comply with the provisions defined in Table 7.5.2.6-1.
+    type: object
+    required:
+      - objectInstanceIds
+      - criteria 
+    properties:
+      objectInstanceIds:
+        description: >
+          Identifiers of the NS instances for which
+          performance information is requested to be collected.
+        type: "array"
+        items:   
           $ref: "SOL005_def.yaml#/definitions/Identifier"
-        nsdId:
-          description: >
-            This identifier, which is allocated by the NSD
-            designer, identifies the NSD in a globally unique
-            way. It is copied from the NSD content and shall be
-            present after the NSD content is on-boarded.
-          $ref: "SOL005_def.yaml#/definitions/Identifier"
-        nsdName:
-          type: "string"
-          description: >  
-            "Name of the on boarded NSD. This information is copied from the
-            NSD content and shall be present after the NSD content is on-boarded."
-        nsdVersion:
-          description: >
-           Version of the on-boarded NSD. This information is
-           copied from the NSD content and shall be present
-           after the NSD content is on-boarded.
-          $ref: "SOL005_def.yaml#/definitions/Version"
-        nsdDesigner:
-          type: "string"
-          description: >  
-            "Designer of the on-boarded NSD. This information is copied
-            from the NSD content and shall be present after the NSD content is on-boarded."
-        nsdInvariantId:
-          description: >
-            This identifier, which is allocated by the NSD
-            designer, identifies an NSD in a version independent
-            manner. This information is copied from the NSD
-            content and shall be present after the NSD content is
-            on-boarded.
-          $ref: "SOL005_def.yaml#/definitions/Identifier"
-        vnfPkgIds:
-          description: >
-            Identifies the VNF package for the VNFD referenced
-            by the on-boarded NS descriptor resource.
-          type: array
-          items:
-            $ref: "SOL005_def.yaml#/definitions/Identifier"
-        pnfdInfoIds:
-          description: >
-            Identifies the PnfdInfo element for the PNFD
-            referenced by the on-boarded NS descriptor
-            resource.
-          type: array
-          items:
-            $ref: "SOL005_def.yaml#/definitions/Identifier"
-        nestedNsdInfoIds:
-          description: >
-            Identifies the NsdInfo element for the nested NSD
-            referenced by the on-boarded NS descriptor
-            resource.
-          type: array
-          items:
-            $ref: "SOL005_def.yaml#/definitions/Identifier"
-        nsdOnboardingState:
-          description: >
-            On boarding state of the individual NS descriptor resource.
-          $ref: "#/definitions/NsdOnboardingStateType"
-        onboardingFailureDetails:
-          description: >
-            Failure details of current on boarding procedure. See
-            clause 4.3.5.3 for the details of "ProblemDetails"
-            structure.
-            It shall be present when the "nsdOnboardingState"
-            attribute is CREATED and the uploading or
-            processing fails in NFVO.
-          $ref: "SOL005_def.yaml#/definitions/ProblemDetails"
-        nsdOperationalState:
-          description: >
-            Operational state of the individual NS descriptor
-            resource. This attribute can be modified with the
-            PATCH method.
-          $ref: "#/definitions/NsdOperationalStateType"
-        nsdUsageState:
-          description: >
-            Usage state of the individual NS descriptor resource.
-          $ref: "#/definitions/NsdUsageStateType"
-        userDefinedData:
-          description: >
-            User defined data for the individual NS descriptor
-            resource. This attribute can be modified with the
-            PATCH method.
-          $ref: "SOL005_def.yaml#/definitions/KeyValuePairs"
-        _links:
-          type: "object"
-          required:
-          - "self"    
-          - "nsd_content"
-          description: >  
-            "Links to resources related to this resource."
-          properties:
-            self:
-              description: >  
-                "URI of this resource."
-              $ref: "SOL005_def.yaml#/definitions/Link"
-            nsd_content:
-              description: >  
-                "Link to the NSD content resource"          
-              $ref: "SOL005_def.yaml#/definitions/Link"
-      description: >  
-        "This type represents a response for the query NSD operation."	
+      criteria:
+        description: >
+          Criteria of the collection of performance information.
+        $ref: "#/definitions/PmJobCriteria"
         
-   NsdInfoModifications:
-     type: "object"
-     description: >
-       This type represents attribute modifications for an individual NS
-       descriptor resource based on the NsdInfo data type. The attributes of
-       NsdInfo that can be modified are included in the NsdInfoModifications
-       data type.NOTE: At least one of the attributes - nsdOperationalState and
-       userDefinedData - shall be present.
-     properties:
-       nsdOperationalState:
-         $ref: "#/definitions/NsdOperationalStateType"
-       userDefinedData:        
-         description: >  
-           Modifications of the userDefinedData attribute in NsdInfo
-           data type. See note. If present, these modifications shall be applied
-           according to the rules of JSON Merge PATCH (see IETF RFC 7396 [25]). 
-           NOTE- At least one of the attributes - nsdOperationalState and userDefinedData - shall be present.
-         type: "array"
-         items:
-           $ref: "SOL005_def.yaml#/definitions/KeyValuePairs"        
-           
-   nsdOperationalState:    
-     description: >  
-       "New value of the "nsdOperationalState" attribute in "NsdInfo"
-       data type. See note.Permitted values: 
-       ENABLED, 
-       DISABLED"
-     type: "array"  
-     items:
-       $ref: "#/definitions/NsdInfoModifications"   
-     
-   NsdmSubscription:
-     type: "object"
-     required:
-     - "id"     
-     - "callbackUri"
-     - "_links"     
-     properties:
-       id:
-         description: >
-           Identifier of this subscription resource.
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       filter:
-         description: >
-           Filter settings for this subscription, to define the subset
-           of all notifications this subscription relates to. 
-           A particular notification is sent to the subscriber if the filter
-           matches, or if there is no filter.       
-         $ref: "#/definitions/NsdmNotificationsFilter"
-       callbackUri:
-         description: >
-           The URI of the endpoint to send the notification to.
-         $ref: "SOL005_def.yaml#/definitions/Uri"
-       _links:
-         type: "object"
-         description: >  
-           Links to resources related to this resource.
-         properties:
-           self:
-             $ref: "SOL005_def.yaml#/definitions/Link"
-     description: >  
-       This type represents a subscription related to notifications about NSD management.
-       
-   NsdmSubscriptionRequest:
-     type: "object"
-     required:
-     - "callbackUri"
-     properties:
-       filter:
-         $ref: "#/definitions/NsdmNotificationsFilter"
-       callbackUri:
-         type: "string"
-         description: >  
-           The URI of the endpoint to send the notification to.
-       authentication:
-         $ref: "#/definitions/SubscriptionAuthentication"
-     description: >  
-       This type represents a subscription request related to notifications
-       about NSD management.
-   NsdmNotificationsFilter:
-     type: "object"
-     description: >  
-       "This type represents a subscription filter related to notifications
-       about NSD management. It shall comply with the provisions defined in Table
-       5.5.3.2-1 of GS NFV-SOL 005. At a particular nesting level in the filter structure,
-       the following applies: All attributes shall match in order for the filter
-       to match (logical "and" between different filter attributes). If an attribute
-       is an array, the attribute shall match if at least one of the values in the
-       array matches (logical "or" between the values of one filter attribute)."     
-     properties:
-       notificationTypes:
-         description: >  
-           "Match particular notification types. Permitted values: NsdOnBoardingNotification,
-           NsdOnboardingFailureNotification, NsdChangeNotification, NsdDeletionNotification
-           PnfdOnBoardingNotification, PnfdOnBoardingFailureNotification, PnfdDeletionNotification.
-           The permitted values of the "notificationTypes" ] attribute are spelled
-           exactly as the names of the notification types to facilitate automated
-           code generation systems."
-         type: array
-         items:
-           type: string
-           enum:
-           - "NsdOnBoardingNotification"
-           - "NsdOnboardingFailureNotification"
-           - "NsdChangeNotification"
-           - "NsdDeletionNotification"
-           - "PnfdOnBoardingNotification"
-           - "PnfdOnBoardingFailureNotification"
-           - "PnfdDeletionNotification"
-       nsdInfoId:
-         description: >
-           Match the NsdInfo identifier which is allocated by the NFVO.
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdId:
-         description: >
-           Match the NSD identifier, which is allocated by the NSD designer.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdName:
-         description: >  
-           Match the name of the on boarded NSD.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/String"
-       nsdVersion:
-         description: >
-           Match the NSD version listed as part of this attribute.
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Version"         
-       nsdDesigner:
-         description: >  
-           "Match the NSD designer of the on-boarded NSD."
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/String"           
-       nsdInvariantId:
-         description: >  
-           Match the NSD invariant identifier which is allocated
-           by the NSD designer and identifies an NSD in a
-           version independent manner.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       vnfPkgIds:
-         description: >  
-           Match VNF packages with a package identifier listed
-           in the attribute.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdInfoIds:
-         description: >  
-           Match the PnfdInfo identifier for the PNFD
-           referenced by the on-boarded NSD.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nestedNsdInfoIds:
-         description: >  
-           Match the NsdInfo identifier for the nested NSD
-           referenced by the on-boarded NSD.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdOnboardingState:
-         description: >  
-           Match particular on-boarding state of the NSD.
-         type: array
-         items: 
-           $ref: "#/definitions/NsdOnboardingStateType"         
-       nsdOperationalState:
-         description: >  
-           Match particular operational state of the on-boarded NSD.       
-         type: array
-         items: 
-           $ref: "#/definitions/NsdOperationalStateType"         
-       nsdUsageState:
-         description: >  
-           Match particular usage state of the on-boarded NSD.
-         type: array
-         items: 
-           $ref: "#/definitions/NsdUsageStateType"         
-       pnfdId:
-         description: >  
-           Match the PNFD identifier which is copied from the PNFD content.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdName:
-         description: >  
-           Match the name of the on-boarded PNFD.
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/String"           
-       pnfdVersion:
-         description: >  
-           Match the PNFD designer of the on-boarded PNFD.         
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Version"         
-       pnfdProvider:
-         description: >  
-           Match the provider of the on-boarded PNFD.
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/String"             
-       pnfdInvariantId:
-         description: >  
-           Match the PNFD in a version independent manner.       
-         type: array
-         items: 
-           $ref: "SOL005_def.yaml#/definitions/Identifier"         
-       pnfdOnboardingState:
-         description: >  
-           Match particular on-boarding state of the PNFD.         
-         type: array
-         items:       
-           $ref: "#/definitions/PnfdOnboardingStateType"
-       pnfdUsageState:
-         description: >  
-           Match the usage state of the individual PNF descriptor resource.  
-         type: array
-         items:       
-           $ref: "#/definitions/PnfdUsageStateType"
-   SubscriptionAuthentication:
-     description: >
-       The procedure defined in clause 4.5.2 allows an API consumer to 
-       obtain authorization to perform API requests towards
-       the API producer, including subscription requests. 
-       For sending the actual notifications matching a subscription, the API
-       producer needs to obtain separate authorization to actually send the notification to the API consumer.
-       If an API consumer requires the API producer to authorize for sending notifications to that API consumer, it shall
-       include in the subscription request a data structure that defines the authorization requirements, as defined in
-       Table 4.5.3.4-1.
-     type: "object"
-     required:
-     - "authType"
-     properties:
-       authType:
-         description: >
-           Defines the types of Authentication
-           Authorization the API consumer is willing to
-           accept when receiving a notification.
-           
-           Permitted values:
+  PmJobCriteria:
+    description: >
+      This type represents collection criteria for PM jobs. 
+      It shall comply with the provisions defined in Table 7.5.3.3-1.
+    type: object
+    required:
+      - collectionPeriod
+      - reportingPeriod 
+    properties:
+      performanceMetric:
+        description: >
+          This defines the types of performance metrics
+          for the specified object instances. At least one
+          of the two attributes (performance metric or
+          group) shall be present.
+        type: "array"
+        items:   
+          $ref: "SOL005_def.yaml#/definitions/String"
+      performanceMetricGroup:
+        description: >
+          Group of performance metrics.
+          A metric group is a pre-defined list of metrics,
+          known to the producer that it can decompose to
+          individual metrics. At least one of the two
+          attributes (performance metric or group) shall
+          be present.
+        type: "array"
+        items:   
+          $ref: "SOL005_def.yaml#/definitions/String"          
+      collectionPeriod:
+        description: >
+          Specifies the periodicity at which the producer
+          will collect performance information. The unit
+          shall be seconds.
+          At the end of each reportingPeriod, the producer will inform the consumer about availability of the performance
+          data collected for each completed collection period during this reportingPeriod. The reportingPeriod should be
+          equal to or a multiple of the collectionPeriod. In the latter case, the performance data for the collection periods
+          within one reporting period are reported together.    
+          In particular when choosing short collection and reporting periods, the number of PM jobs that can be
+          supported depends on the capability of the producing entity.
+        type: integer
+        minimum: 0
+        default: 0       
+      reportingPeriod:
+        description: >
+          Specifies the periodicity at which the producer
+          will report to the consumer.
+          about performance information. The unit shall be seconds.
+          At the end of each reportingPeriod, the producer will inform the consumer about availability of the performance
+          data collected for each completed collection period during this reportingPeriod. The reportingPeriod should be
+          equal to or a multiple of the collectionPeriod. In the latter case, the performance data for the collection periods
+          within one reporting period are reported together.    
+          In particular when choosing short collection and reporting periods, the number of PM jobs that can be
+          supported depends on the capability of the producing entity.          
+        type: integer
+        minimum: 0
+        default: 0        
+      reportingBoundary:
+        description: >
+          Identifies a time boundary after which the
+          reporting will stop. The boundary shall allow a
+          single reporting as well as periodic reporting up
+          to the boundary.
+        $ref: "SOL005_def.yaml#/definitions/DateTime"
 
-           BASIC: In every HTTP request to the
-           notification endpoint, use HTTP Basic
-           authentication with the client credentials.
-           
-           OAUTH2_CLIENT_CREDENTIALS: In every
-           HTTP request to the notification endpoint, use
-           an OAuth 2.0 Bearer token, obtained using the
-           client credentials grant type.
-           
-           TLS_CERT: Every HTTP request to the
-           notification endpoint is sent over a mutually
-           authenticated TLS session. i.e. not only server
-           is authenticated, but also the client is
-           authenticated during the TLS tunnel setup
+  PmJob:
+    description: >
+      This type represents a PM job.
+    type: object
+    required:
+      - id
+      - objectInstanceIds
+      - criteria     
+    properties:
+      id:
+        description: >
+          Identifier of this PM job.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      objectInstanceIds:
+        description: >
+          Identifiers of the NS instances for which
+          performance information is collected.
+        type: array
+        items:
+          $ref: "SOL005_def.yaml#/definitions/Identifier"
+      criteria:
+        description: >
+          Criteria of the collection of performance information.
+        $ref: "#/definitions/PmJobCriteria"
+      reports:
+        description: >
+          Information about available reports collected by this PM job.
+        type: object
+        required:
+          - href
+          - readyTime
+          - _links
+        properties:
+          href:
+            description: >
+              The Uri where the report can be obtained.
+            $ref: "SOL005_def.yaml#/definitions/Uri"
+          readyTime:
+            description: >
+              The time when the report was made available.
+            $ref: "SOL005_def.yaml#/definitions/DateTime"
+          expiryTime:
+            description: >
+              The time when the report will expire.
+            $ref: "SOL005_def.yaml#/definitions/DateTime"
+          fileSize:
+            description: >
+              The size of the report file in bytes, if known.
+            type: integer            
+          _links:
+            description: >
+              Links for this resource.
+            type: object
+            required:
+              - self
+            properties:
+              self:
+                description: >
+                  URI of this resource.
+                $ref: "SOL005_def.yaml#/definitions/Link"
+              objects:
+                description: >
+                  Links to resources representing the NS
+                  instances for which performance information is
+                  collected. Shall be present if the NS instance
+                  information is accessible as a resource.
+                type: array
+                items: 
+                  $ref: "SOL005_def.yaml#/definitions/Link"
+                  
+  CreateThresholdRequest:
+    description: >
+      This type represents a request to create a threshold.
+    type: object
+    required:
+      - objectInstanceId
+      - criteria
+    properties: 
+      objectInstanceId:
+        description: >
+          Identifier of the NS instance associated with this threshold.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      criteria:
+        description: >
+          Criteria that define this threshold.
+        $ref: "#/definitions/ThresholdCriteria"
+        
+  Threshold:
+    description: >
+      This type represents a threshold.
+    type: object
+    required: 
+      - id
+      - objectInstanceId
+      - criteria
+      - _links
+    properties: 
+      id:
+        description: >
+          Identifier of this threshold resource.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      objectInstanceId:
+        description: >
+          Identifier of the NS instance associated with the threshold.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      criteria:
+        description: >
+          Criteria that define this threshold.
+        $ref: "#/definitions/ThresholdCriteria"
+      _links:
+        description: >
+          Links for this resource.
+        type: object
+        required: 
+          - self
+        properties: 
+          self:
+            description: >
+              URI of this resource.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+          object: 
+            description: >
+              Link to a resource representing the NS instance for
+              which performance information is collected. Shall be
+              present if the NS instance information is accessible as
+              a resource.
+              
+  ThresholdCriteria:
+    description: >
+      This type represents criteria that define a threshold.
+    type: object
+    required: 
+      - performanceMetric
+      - thresholdType
+    properties: 
+      performanceMetric:
+        description: >
+          Defines the performance metric associated with the
+          threshold, as specified in ETSI GS NFV-IFA 027).
+        type: string
+      thresholdType:
+        description: >
+          Type of threshold. This attribute determines which other attributes
+          are present in the data structure.
+          Permitted values:
+          * SIMPLE: Single-valued static threshold
+          In the present document, simple thresholds are defined. The
+          definition of additional threshold types is left for future
+          specification.
+        type: string
+        enum:
+          - SIMPLE
+      simpleThresholdDetails:
+        description: >
+          Details of a simple threshold. Shall be present if
+          thresholdType="SIMPLE".
+        type: object
+        required: 
+          - thresholdValue
+          - hysteresis
+        properties: 
+          thresholdValue:
+            description: >
+              The threshold value. Shall be represented as a floating point
+              number.               
+            type: integer
+          hysteresis:
+            description: >
+              The hysteresis of the threshold. Shall be represented as a
+              non-negative floating point number.
+              A notification with crossing direction "UP" will be generated if
+              the measured value reaches or exceeds
+              "thresholdValue" + "hysteresis". A notification with crossing
+              direction "DOWN" will be generated if the measured value reaches
+              or undercuts "thresholdValue" - "hysteresis".
+              The hysteresis is defined to prevent storms of threshold
+              crossing notifications. When processing a request to create a
+              threshold, implementations should enforce a suitable minimum
+              value for this attribute (e.g. override the value or reject the
+              request).
+            type: integer
+            
+  PmSubscriptionRequest:
+    description: >
+      This type represents a subscription request.
+    type: object
+    required: 
+      - callbackUri
+    properties:
+      filter:
+        description: >
+          Filter settings for this subscription, to define the subset of
+          all notifications this subscription relates to. A particular
+          notification is sent to the subscriber if the filter matches,
+          or if there is no filter.
+        $ref: "#/definitions/PmNotificationsFilter"
+      callbackUri:
+        description: >
+          The URI of the endpoint to send the notification to.
+        $ref: "SOL005_def.yaml#/definitions/Uri"
+      authentication:
+        description: >
+          Authentication parameters to conFigure the use of
+          Authorization when sending notifications corresponding
+          to this subscription, as defined in clause 4.5.3.4.
+          This attribute shall only be present if the subscriber
+          requires authorization of notifications..
+        $ref: "SOL005_def.yaml#/definitions/SubscriptionAuthentication"
+        
+  PmNotificationsFilter:
+    description: >
+      This type represents a filter that can be used to subscribe for 
+      notifications related to performance management events. It
+      shall comply with the provisions defined in Table 7.5.3.2-1.
+      At a particular nesting level in the filter structure, the following applies: 
+      All attributes shall match in order for the filter
+      to match (logical "and" between different filter attributes). 
+      If an attribute is an array, the attribute shall match if at least
+      one of the values in the array matches (logical "or" between the values of one filter attribute).
+    type: object
+    properties: 
+      nsInstanceSubscriptionFilter:
+        description: >
+          Filter criteria to select NS instances about which to notify.
+        $ref: "SOL005_def.yaml#/definitions/NSInstanceSubscriptionFilter"
+      notificationTypes:
+        description: >
+          Match particular notification types.
+          Permitted values:
+          - ThresholdCrossedNotification
+          - PerformanceInformationAvailableNotification
+          The permitted values of the "notificationTypes" attribute are
+          spelled exactly as the names of the notification types to facilitate
+          automated code generation systems.          
+        type: array
+        items:
+          type: string
+          enum:
+            - ThresholdCrossedNotification
+            - PerformanceInformationAvailableNotification
+  PmSubscription:
+    description: >
+      This type represents a subscription.
+    type: object
+    required: 
+      - id
+      - callbackUri
+      - _links
+    properties: 
+      id:
+        description: >
+          Identifier that identifies the subscription.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      filter:
+        description: >
+          Filter settings for this subscription, to define the subset of all
+          notifications this subscription relates to. A particular
+          notification is sent to the subscriber if the filter matches, or if
+          there is no filter.
+        $ref: "#/definitions/PmNotificationsFilter"
+      callbackUri:
+        description: >
+          The URI of the endpoint to send the notification to.
+        $ref: "SOL005_def.yaml#/definitions/Uri"
+      _links:
+        description: >
+          Links to resources related to this resource.
+        type: object
+        required:
+          - self
+        properties:
+          self:
+            description: >
+              URI of this resource.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+            
+  Version:
+    description: >
+      Software version of the VNF. This is
+      changed when there is any change to the
+      software included in the VNF package.
+      This information is copied from the VNFD.
+      It shall be present after the VNF package
+      content has been on-boarded and absent otherwise.
+    type: string
 
-         type: string
-         enum: 
-           - BASIC
-           - OAUTH2_CLIENT_CREDENTIALS      
-           - TLS_CERT           
-       paramsBasic:
-         type: "object"
-         description: >  
-           Parameters for authentication/authorization using BASIC.
-           Shall be present if authType is "BASIC" and
-           the contained information has not been
-           provisioned out of band. Shall be absent otherwise.
-         properties:
-           userName:
-             description: >  
-               Username to be used in HTTP Basic authentication. 
-               Shall be present if it has not been provisioned out of band.
-             type: string
-           password:
-             description: >  
-               Password to be used in HTTP Basic authentication. 
-               Shall be present if it has not been provisioned out of band.
-             type: string             
-       paramsOauth2ClientCredentials:
-         type: "object"
-         description: >  
-           Parameters for authentication/authorization using OAUTH2_CLIENT_CREDENTIALS.
-           Shall be present if authType is "OAUTH2_CLIENT_CREDENTIALS" and the
-           contained information has not been provisioned out of band. 
-           Shall be absent otherwise
-         properties:
-           clientId:
-             description: >  
-               Client identifier to be used in the access token
-               request of the OAuth 2.0 client credentials
-               grant type. Shall be present if it has not been
-               provisioned out of band.
-             type: string
-           clientPassword:
-             description: >  
-               Client password to be used in the access
-               token request of the OAuth 2.0 client
-               credentials grant type. Shall be present if it
-               has not been provisioned out of band.
-             type: string 
-           tokenEndpoint:
-             description: >  
-               The token endpoint from which the access
-               token can be obtained. Shall be present if it
-               has not been provisioned out of band.
-             $ref: "SOL005_def.yaml#/definitions/Uri"       
-           
-   NsdOperationalStateType:
-     type: "string"
-     description: >  
-       "The enumeration NsdOperationalStateType shall comply with the provisions
-       defined in Table 5.5.4.3-1 of GS NFV_SOL 005. It indicates the operational
-       state of the resource.
-       ENABLED = The operational state of the resource is enabled. 
-       DISABLED = The operational state of the resource is disabled."
-     enum:
-     - "ENABLED"
-     - "DISABLED"
-   NsdOnboardingStateType:
-     type: "string"
-     description: >  
-       "The enumeration NsdOnboardingStateType shall comply with the provisions
-       defined in Table 5.5.4.5-1 of GS NFV-SOL 005. It indicates the on-boarding
-       state of the NSD.
-       CREATED = The NSD information object is created. 
-       UPLOADING = The associated NSD content is being uploaded. 
-       PROCESSING = The associated NSD content is being processed, e.g. validation. 
-       ONBOARDED = The associated NSD content is on-boarded."
-     enum:
-     - "CREATED"
-     - "UPLOADING"
-     - "PROCESSING"
-     - "ONBOARDED"
-   NsdUsageStateType:
-     type: "string"
-     description: >  
-       "The enumeration NsdUsageStateType shall comply with the provisions
-       defined in Table 5.5.4.4-1 of GS NFV-SOL 005. It indicates the usage state
-       of the resource.IN_USE = The resource is in use.NOT_IN_USE = The resource
-       is not-in-use."
-     enum:
-     - "IN_USE"
-     - "NOT_IN_USE"
-   CreateNsdInfoRequest:
-     type: "object"
-     properties:
-       userDefinedData:
-         $ref: "SOL005_def.yaml#/definitions/KeyValuePairs"
-     description: >  
-       "This type creates a completely new NS descriptor resource."
-   PnfdInfoModifications:
-     type: "object"
-     required:
-     - "userDefinedData"
-     properties:
-       userDefinedData:
-         $ref: "SOL005_def.yaml#/definitions/KeyValuePairs"
-     description: >  
-       "This type represents attribute modifications for an individual PNF
-       descriptor resource based on the "PnfdInfo" data type. The attributes of
-       "PnfdInfo" that can be modified are included in the "PnfdInfoModifications"
-       data type."
-   PnfdInfo:
-     type: "object"
-     required:
-     - "id"
-     - "pnfdOnboardingState"
-     - "pnfdUsageState"
-     - "_links"     
-     properties:
-       id:
-         description: >
-           Identifier of the on-boarded individual PNF
-           descriptor resource. This identifier is allocated by
-           the NFVO.
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdId:
-         description: >
-           This identifier, which is managed by the PNFD
-           designer, identifies the PNFD in a globally unique way. 
-           It is copied from the PNFD content and shall
-           be present after the PNFD content is on-boarded.
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdName:
-         description: >  
-           Name of the on-boarded PNFD. This information
-           is copied from the PNFD content and shall be
-           present after the PNFD content is on-boarded.
-         type: "string"           
-       pnfdersion:
-         $ref: "SOL005_def.yaml#/definitions/Version"
-       pnfdProvider:
-         description: >  
-           "Provider of the on-boarded PNFD. This information is copied from
-           the PNFD content and shall be present after the PNFD content is on-boarded."
-         type: "string"           
-       pnfdInvariantId:
-         description: >
-           Identifies a PNFD in a version independent
-           manner. This attribute is invariant across versions
-           of PNFD.
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdOnboardingState:
-         description: >
-           On-boarding state of the individual PNF descriptor resource.
-         $ref: "#/definitions/PnfdOnboardingStateType"
-       onboardingFailureDetails:
-         description: >
-           Failure details of current on-boarding procedure.           
-           It shall be present when the
-           pnfdOnboardingState attribute is CREATED
-           and the uploading or processing fails in the NFVO.         
-         $ref: "SOL005_def.yaml#/definitions/ProblemDetails"
-       pnfdUsageState:
-         description: >
-           Usage state of the individual PNF descriptor resource.         
-         $ref: "#/definitions/PnfdUsageStateType"
-       userDefinedData:
-         type: "array"
-         description: >  
-           User defined data for the individual PNF descriptor resource.
-           This attribute can be modified with the PATCH method.
-         items:
-           type: "object"           
-       _links:
-         required:
-         - "pnfd_content"
-         - "self"
-         type: "object"
-         description: >  
-           "Links to resources related to this resource."
-         properties:
-           self:
-             $ref: "SOL005_def.yaml#/definitions/Link"
-           pnfd_content:
-             $ref: "SOL005_def.yaml#/definitions/Link"
-     description: >  
-       "This type represents a response for the query PNFD operation."
-       
-   PnfdOnboardingStateType:
-     type: "string"
-     description: >  
-       The enumeration PnfdOnboardingStateType shall comply with the provisions
-       defined in Table 5.5.4.6-1 of GS-NFV SOL005. It indicates the on-boarding state
-       of the individual PNF descriptor resource.
-       CREATED = The PNF descriptor resource is created. 
-       UPLOADING = The associated PNFD content is being uploaded.
-       PROCESSING = The associated PNFD content is being processed, e.g. validation.
-       ONBOARDED = The associated PNFD content is on-boarded.
-     enum:
-     - "CREATED"
-     - "UPLOADING"
-     - "PROCESSING"
-     - "ONBOARDING"
-   PnfdUsageStateType:
-     type: "string"
-     description: >  
-       "The enumeration PnfdUsageStateType shall comply with the provisions
-       defined in Table 5.5.4.7-1 of GS NFV-SOL005. It indicates the usage state
-       of the resource.IN-USE = The resource is in use.NOT_IN_USE = The resource
-       is not-in-use."
-     enum:
-     - "IN_USE"
-     - "NOT_IN_USE"
-   CreatePnfdInfoRequest:
-     type: "object"
-     properties:
-       userDefinedData:
-         $ref: "SOL005_def.yaml#/definitions/KeyValuePairs"
-     description: >  
-       User-defined data for the PNF descriptor resource to be created.
-       It shall be present when the user defined data is set for
-       the individual PNF descriptor resource to be created.
-   NsdmLinks:
-     type: "object"
-     required:
-     - "nsdInfo"
-     - "subscription"
-     properties:
-       nsdInfo:
-         $ref: "SOL005_def.yaml#/definitions/Link"
-       subscription:
-         $ref: "SOL005_def.yaml#/definitions/Link"
-     description: >  
-       "This type represents the links to resources that an NSD management
-       notification can contain."
-   PnfdmLinks:
-     type: "object"
-     required:
-     - "pnfdInfo"
-     - "subscription"
-     properties:
-       pnfdInfo:
-         $ref: "SOL005_def.yaml#/definitions/Link"
-       subscription:
-         $ref: "SOL005_def.yaml#/definitions/Link"
-     description: >  
-       "This type represents the links to resources that a PNFD management
-       notification can contain."       
-   NsdOnBoardingNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "nsdId"
-     - "nsdInfoId"
-     - "timeStamp"
-     properties:
-       id:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       notificationType:
-         type: "string"
-         description: >  
-           "Discriminator for the different notification types. Shall be
-           set to "NsdOnboardingNotification" for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"
-       nsdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       _links:
-          $ref: "#/definitions/NsdmLinks"
-     description: >  
-       "This type represents an NSD management notification, which informs
-       the receiver of the successful on-boarding of an NSD. It shall comply with
-       the provisions defined in Table 5.5.2.9-1. The support of this notification
-       is mandatory. The notification shall be triggered by the NFVO when the "
-       nsdOnboardingState" attribute of a new NSD has changed to "ONBOARDED"."
-   NsdOnBoardingFailureNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "nsdInfoId"
-     - "onboardingFailureDetails"
-     - "timeStamp"
-     properties:
-       id:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       notificationType:
-         type: "string"
-         description: >  
-           "Discriminator for the different notification types. Shall be
-           set to "NsdOnboardingFailureNotification" for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"
-       nsdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       onboardingFailureDetails:
-         $ref: "SOL005_def.yaml#/definitions/ProblemDetails"
-       _links:
-         $ref: "#/definitions/NsdmLinks"
-     description: >  
-       "This type represents an NSD management notification, which informs
-       the receiver of the failure of on-boarding an NSD. It shall comply with the
-       provisions defined in Table 5.5.2.10-1. The support of this notification is
-       mandatory. The notification shall be triggered by the NFVO when the on-boarding
-       of an NSD has failed."
-   NsdChangeNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "nsdId"
-     - "nsdInfoId"
-     - "nsdOperationalState"
-     - "timeStamp"
-     properties:
-       id:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       notificationType:
-         type: "string"
-         description: >  
-           "Discriminator for the different notification types. Shall be
-           set to "NsdChangeNotification" for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"           
-       nsdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdOperationalState:
-         $ref: "#/definitions/NsdOperationalStateType"
-       _links:
-         $ref: "#/definitions/NsdmLinks"
-     description: >  
-       "This type represents an NSD management notification, which informs
-       the receiver of a change of the "nsdOperationalState" attribute of an on-boarded
-       NSD. Changes in the value of the "nsdUsageState" and "nsdOnboardingState"
-       attributes are not reported. The notification shall comply with the provisions
-       defined in Table 5.5.2.11-1. The support of this notification is mandatory.
-       The notification shall be triggered by the NFVO when the value of the "nsdOperationalState"
-       attribute has changed, and the "nsdOperationalState" attribute has the value
-       "ONBOARDED"."
-   NsdDeletionNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "nsdId"
-     - "nsdInfoId"
-     - "timeStamp"
-     properties:
-       id:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       notificationType:
-         type: "string"
-         description: >  
-           "Discriminator for the different notification types. Shall be
-           set to "NsdDeletionNotification " for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"           
-       nsdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       nsdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       _links:
-         $ref: "#/definitions/NsdmLinks"
-     description: >  
-       "This type represents an NSD management notification, which informs
-       the receiver of the deletion of an on-boarded NSD. The notification shall
-       comply with the provisions defined in Table 5.5.2.12-1. The support of this
-       notification is mandatory. The notification shall be triggered by the NFVO
-       when it has deleted an on-boarded NSD."
-   PnfdOnBoardingNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "pnfdId"
-     - "pnfdInfoId"
-     - "timeStamp"
-     properties:
-       id:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       notificationType:
-         type: "string"
-         description: >  
-           "Discriminator for the different notification types. Shall be
-           set to "PnfdOnboardingNotification" for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"           
-       pnfdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       _links:
-         $ref: "#/definitions/PnfdmLinks"
-     description: >  
-       "This type represents a PNFD management notification, which informs
-       the receiver of the successful on-boarding of aPNFD. It shall comply with
-       the provisions defined in Table 5.5.2.13-1. The support of this notification
-       is mandatory. The notification is triggered when a new PNFD is on-boarded."
-   PnfdOnBoardingFailureNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "onboardingFailureDetails"
-     - "pnfdInfoId"
-     - "timeStamp"
-     properties:
-       id:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       notificationType:
-          type: "string"
-          description: >  
-            "Discriminator for the different notification types. Shall be
-            set to "PnfdOnboardingFailureNotification" for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"           
-       pnfdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       onboardingFailureDetails:
-         $ref: "SOL005_def.yaml#/definitions/ProblemDetails"
-       _links:
-         $ref: "#/definitions/PnfdmLinks"
-     description: >  
-       "This type represents a PNFD management notification, which informs
-       the receiver of the failure of on-boarding a PNFD. It shall comply with
-       the provisions defined in Table 5.5.2.14-1. The support of this notification
-       is mandatory. The notification is triggered when the on-boarding of a PNFD
-       fails."
-   PnfdDeletionNotification:
-     type: "object"
-     required:
-     - "_links"
-     - "id"
-     - "notificationType"
-     - "pnfdId"
-     - "pnfdInfoId"
-     - "timeStamp"
-     properties:
-       id:
-         type: "string"
-         description: >  
-           "Identifier of this notification. If a notification is sent multiple
-           times due to multiple subscriptions, the "id" attribute of all these
-           notifications shall have the same value."
-       notificationType:
-         type: "string"
-         description: >  
-           "Discriminator for the different notification types. Shall be
-           set to "PnfdDeletionNotification " for this notification type."
-       subscriptionId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       timeStamp:
-         description: >  
-           Date-time of the generation of the notification.
-         $ref: "SOL005_def.yaml#/definitions/DateTime"           
-       pnfdInfoId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       pnfdId:
-         $ref: "SOL005_def.yaml#/definitions/Identifier"
-       _links:
-         $ref: "#/definitions/PnfdmLinks"
-     description: > 
-       This type represents a PNFD management notification, which informs
-       the receiver of the deletion of an on-boarded PNFD. The notification shall
-       comply with the provisions defined in Table 5.5.2.15-1. The support of this
-       notification is mandatory. The notification is triggered when an on-boarded
-       PNFD is deleted.''')
+  Checksum:
+    description: >
+      This type represents the checksum of a VNF package or an artifact file.  
+    required:
+      - algorithm
+      - hash
+    type: object
+    properties:
+      algorithm:
+        description: >
+          Name of the algorithm used to generate the checksum,
+          as defined in ETSI GS NFV-SOL 004 [5]. For example, SHA-256, SHA-512.
+        type: string
+      hash:
+        description: >
+          The hexadecimal value of the checksum.
+        type: string
+  Link:
+    type: "object"
+    
+  PerformanceInformationAvailableNotification:
+    description: >
+      This notification informs the receiver that performance information is available.
+    type: object
+    required:
+      - id
+      - notificationType
+      - subscriptionId
+      - timeStamp
+      - objectInstanceId
+      - _links
+    properties:
+      id:
+        description: >
+          Identifier of this notification. If a notification is
+          sent multiple times due to multiple
+          subscriptions, the "id" attribute of all these
+          notifications shall have the same value.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      notificationType:
+        description: >
+          Discriminator for the different notification types.
+          Shall be set to
+          "PerformanceInformationAvailableNotification"
+          for this notification type.
+        type: string
+      subscriptionId:
+        description: >
+          Identifier of the subscription that this notification relates to.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      timeStamp:
+        description: >
+          Date and time of the generation of the notification.
+        $ref: "SOL005_def.yaml#/definitions/DateTime"
+      objectInstanceId:
+        description: >
+          Identifier that identifies a NS instance.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"        
+      _links:
+        description: >
+          Links to resources related to this notification.
+        type: object
+        required:
+          - subscription
+          - pmJob
+          - performanceReport
+        properties:
+          subscription:
+            description: >
+              Link to the related subscription.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+          objectInstance:
+            description: >
+              Link to the resource representing the NS
+              instance to which the notified change applies.
+              Shall be present if the NS instance information
+              is accessible as a resource.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+          pmJob:
+            description: >
+              Link to the resource that represents the PM job
+              for which performance information is available.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+          performanceReport:
+            description: >
+              Link from which the available performance
+              information of data type "PerformanceReport"
+              (see clause 7.5.2.10) can be obtained.
+              This link should point to an "Individual
+              performance report" resource as defined in
+              clause 6.4.3a.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+
+  ThresholdCrossedNotification:
+    description: >
+      This type represents a notification that is sent when a threshold has been crossed.
+    type: object
+    required:
+      - id
+      - notificationType
+      - subscriptionId
+      - timeStamp
+      - thresholdId
+      - crossingDirection
+      - objectInstanceId
+      - performanceMetric
+      - performanceValue
+      - _links
+    properties:
+      id:
+        description: >
+          Identifier of this notification. If a notification is
+          sent multiple times due to multiple
+          subscriptions, the "id" attribute of all these
+          notifications shall have the same value..
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      notificationType:
+        description: >
+          Discriminator for the different notification types.
+          Shall be set to "ThresholdCrossedNotification "
+          for this notification type.
+        type: string
+      subscriptionId:
+        description: >
+          Identifier of the subscription that this notification relates to.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"
+      timeStamp:
+        description: >
+          Date and time of the generation of the notification.
+        $ref: "SOL005_def.yaml#/definitions/DateTime"
+      thresholdId:
+        description: >
+          Identifier of the threshold which has been crossed.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"    
+      crossingDirection:
+        description: >
+          An indication of whether the threshold was crossed in upward or downward direction.
+        $ref: "#/definitions/CrossingDirectionType"    
+      objectInstanceId:
+        description: >
+          Identifier that identifies a NS instance.
+        $ref: "SOL005_def.yaml#/definitions/Identifier"            
+      performanceMetric:
+        description: >
+          Performance metric associated with the threshold.
+        type: string
+      performanceValue:
+        description: >
+          Value of the metric that resulted in threshold crossing. See note.
+        type: object        
+      _links:
+        description: >
+          Links to resources related to this notification.
+        type: object
+        required:
+          - subscription
+          - objectInstance
+          - threshold
+        properties:
+          subscription:
+            description: >
+              Link to the related subscription.
+            $ref: "SOL005_def.yaml#/definitions/Link"
+          objectInstance:
+            description: >
+              Link to the resource representing the NS
+              instance to which the notified change applies.
+              Shall be present if the NS instance information
+              is accessible as a resource..
+            $ref: "SOL005_def.yaml#/definitions/Link"
+          threshold:
+            description: >
+              Link to the resource that represents the
+              threshold that was crossed.
+            $ref: "SOL005_def.yaml#/definitions/Link"            
+            
+  CrossingDirectionType:
+    description: >
+      The enumeration CrossingDirectionType shall comply with the provisions.  
+      Acceptable Values are:
+      UP - The threshold was crossed in upward direction.
+      DOWN - The threshold was crossed in downward direction.
+    type: string
+    enum:
+      - UP
+      - DOWN
+''')
 		Assertions.assertNotNull(result)
 		val errors = result.eResource.errors
 		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')

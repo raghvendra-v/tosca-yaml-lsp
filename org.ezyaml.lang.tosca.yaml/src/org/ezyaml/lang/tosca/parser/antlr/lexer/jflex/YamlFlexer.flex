@@ -427,13 +427,21 @@ INDENT= [\ ]+
 												return RULE_MARGIN;
 											} else {
 												return RULE_HIDDEN;
-											}											
+											}
 										} else {
 											return RULE_STR;
 										} 
 									}
-	[^\ \r\n] [^#\r\n]*	/ (({SL_COMMENT})? {EOL})		{  return RULE_STR; }
-	{EOL} 							{  if ( yystate() == BLK_FOLDED_RHS_STRING ) { return RULE_FOLDED_EOL; } else { return RULE_EOL;} }								
+	{INDENT} / {EOL}				{  
+										if (yycolumn==0) {
+												return RULE_HIDDEN;
+										} else {
+											return RULE_STR;
+										} 
+									}	
+	[^\ \r\n] [^#\r\n]*	/ (({SL_COMMENT})? {EOL})
+									{  return RULE_STR; }
+	{EOL} 							{  if ( yystate() == BLK_FOLDED_RHS_STRING ) { return RULE_FOLDED_EOL; } else { return RULE_EOL;} }
 }
 <INLINE_SEQUENCE> {
 	[^\ \],\r\n]+ 	{ yypushback(yylength()); yybegin(INLINE_SEQUENCE_ENTRY);}
@@ -495,18 +503,6 @@ INDENT= [\ ]+
 
 <YYINITIAL> {
 {INDENT} / (({SL_COMMENT})? {EOL})				{return RULE_HIDDEN;}
-{INDENT} /  .									{
-													if ( yycolumn != 0 ) {
-														if ( currentIndent == (yylength()+yycolumn) )
-															return RULE_MARGIN;
-														else 
-															return RULE_HIDDEN;
-													} else {
-														currentIndent=yylength();
-														handleINDENT();														
-													}
-													return RULE_HIDDEN; //just to empty up the pending tokens
-												}
 {INDENT}? ( {ESCAPED_DQ_STRING} | {ESCAPED_SQ_STRING} | {SINGLE_QUOTED_STRING} | {DOUBLE_QUOTED_STRING} ) / ( ":" ([\ ] .*)? (({SL_COMMENT})? {EOL}) )
 												{ 
 													Matcher indent_matcher=INDENT.matcher(yytext());
@@ -530,7 +526,7 @@ INDENT= [\ ]+
 													//zzStartRead+=currentIndent; yycolumn+=currentIndent; //this is like yypushforward of marker
 													return RULE_STR; 
 												}
-{INDENT}? [\-] ([\ ] [^\'\"#\r\n]+)? / ( ":" ([\ ] .*)? (({SL_COMMENT})? {EOL}) )
+{INDENT}? [\-] ([\ ]+ [^\'\"#\r\n]+)? / ( ":" ([\ ] .*)? (({SL_COMMENT})? {EOL}) )
 												{
 													Matcher indent_matcher=INDENT.matcher(yytext());
 													int firstIndent=( indent_matcher.matches()? indent_matcher.end(1):0);
@@ -543,17 +539,18 @@ INDENT= [\ ]+
 													return(HyphenMinus);
 												}												
 //Jflex expressions were not cutting it, hence match whole line
-[^\'\"#\-\ \r\n] [^#\r\n]+ / (({SL_COMMENT})? {EOL})  					
+{INDENT}? [^\'\"#\-\ \r\n] [^#\r\n]+ / (({SL_COMMENT})? {EOL})  					
 												{
-													String text = yytext();Matcher mapMatcher = MAP_SEPERATOR.matcher(text);
-													if ( yycolumn==0 ) {
-														currentIndent=yycolumn;
-														handleINDENT();
-													}
+													String text = yytext();
+													Matcher indent_matcher=INDENT.matcher(text);
+													int firstIndent=( indent_matcher.matches()? indent_matcher.end(1):0);
+													Matcher mapMatcher = MAP_SEPERATOR.matcher(text.substring(firstIndent));
 													if ( mapMatcher.find() ) {
+														currentIndent=firstIndent+yycolumn;
+														handleINDENT(firstIndent);//pushes a marker type INDENT, but with a lesser spread, same as first
 														yypushback(yylength() - mapMatcher.start(1));
 														yybegin(SEPERATOR); return RULE_KEY_STR; 
-													} else if ( yycolumn >= currentIndent ) {
+													} else if ( (yycolumn+firstIndent) >= currentIndent ) {
 														yybegin(MIXED_STRING);
 													} /*else {
 														return RULE_HIDDEN; //catch all , so that tokenizer does not fail
@@ -570,7 +567,7 @@ INDENT= [\ ]+
 													pushMarkerToken(currentIndent, START_OF_SEQ);
 													pendingTokens.push(HyphenMinus,"-");
 													pendingTokens.push(RULE_HIDDEN,yytext().substring(1,secondIndent));
-													yypushback(yylength()-secondIndent-1); //for the one char we consumed after indent and before lookahead
+													yypushback(yylength()-secondIndent); //for the one char we consumed after indent and before lookahead
 													yybegin(RHS_VAL);
 												}
 }
