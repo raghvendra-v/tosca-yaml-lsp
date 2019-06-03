@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature id="org.ezyaml.lang.tosca.yaml.feature"
+	label="Yaml Feature "
+	version="1.0.0.qualifier">
+	<plugin
+			id="org.ezyaml.lang.tosca.yaml"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+	<plugin
+			id="org.ezyaml.lang.tosca.yaml.ide"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+	<plugin
+			id="org.ezyaml.lang.tosca.yaml.ui"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+</feature>

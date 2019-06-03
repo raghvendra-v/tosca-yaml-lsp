@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+	<feature id="org.ezyaml.lang.tosca.yaml.feature" version="0.0.0">
+		<category name="main"/>
+	</feature>
+	<feature id="org.ezyaml.lang.tosca.yaml.feature.source" version="0.0.0">
+		<category name="main.source"/>
+	</feature>
+	<category-def name="main" label="Yaml"/>
+	<category-def name="main.source" label="Yaml (Sources)"/>
+</site>

@@ -1,0 +1,15 @@
+.gradle
+#.settings
+**/.classpath
+**/bin
+**/build
+org.tosca.yaml/model
+gradle/wrapper/gradle-wrapper.jar
+**/src-gen
+**/xtend-gen
+**/target
+**/.project
+org.tosca.yaml.generator.helper/extra-classes
+org.tosca.yaml.tests/YamlLanguageServer.log
+plugin.xml_gen
+YamlFlexer.java*

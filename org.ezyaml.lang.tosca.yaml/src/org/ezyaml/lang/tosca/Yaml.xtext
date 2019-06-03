@@ -1,0 +1,104 @@
+grammar org.ezyaml.lang.tosca.Yaml hidden(EOL, SL_COMMENT, HIDDEN, FOLDED_EOL)
+
+generate yaml "http://www.ezyaml.org/lang/tosca/Yaml"
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+import "http://www.eclipse.org/xtext/common/JavaVMTypes" as java
+
+YamlDocument:
+	(content+=YamlStructure)*;
+
+YamlStructure:
+	YamlMappingExpr;
+
+YamlMappingExpr:
+	(MARGIN|INDENT)? key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS)|(INDENT START_OF_SEQ value+=YamlSequenceExpr))* END_OF_RHS;
+
+YamlMappingEntry:
+	key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS)|((INDENT|MARGIN)? START_OF_SEQ value+=YamlSequenceExpr))* END_OF_RHS;
+
+YamlMap returns YamlRHS:
+	(MARGIN entries+=YamlMappingEntry)+;
+
+YamlSubNode returns YamlRHS:
+	(INDENT entries+=YamlMappingEntry)(MARGIN entries+=YamlMappingEntry)*;
+	
+YamlSequenceExpr:
+	( "-" entries+=(YamlRHS|YamlMap)) ( MARGIN START_OF_SEQ_ENTRY "-" entries+=(YamlRHS|YamlMap))* END_OF_SEQ;
+
+YamlRHS:
+	("[" Array) | ("{" Map) | Scalar | YamlSubNode ;
+
+Array:
+	{Array} ((entries+=YamlRHS) ("," entries+=YamlRHS)*)? "]";
+
+Map:
+	{Map} ((entries+=MapEntry) ("," entries+=MapEntry)*)? "}";
+
+MapEntry:
+	key=KEY_STR ":" value=YamlRHS;
+
+Scalar:
+	numValue=NUMBER | boolValue=BOOLEAN | (START_OF_STR ((INDENT | MARGIN | DEDENT)? stringValue+=STR)+ END_OF_STR) |
+	(stringValue+=STR);
+	
+terminal FOLDED_EOL:
+	'\t captures a newline but should be translated as SPACE\t'
+;
+terminal START_OF_STR:
+	'\t to indicate start of an unquoted string\t';
+
+terminal START_OF_SEQ:
+	'\t to indicate start of a sequence\t';
+
+terminal START_OF_RHS:
+	'\t to indicate start of an complex value\t';
+
+terminal END_OF_STR:
+	'\t to indicate end of an unquoted string\t';
+
+terminal START_OF_SEQ_ENTRY:
+	'synthetic hidden tokens';
+terminal END_OF_SEQ:
+	'\t to indicate end of a sequence\t';
+
+terminal END_OF_RHS:
+	'\t to indicate end of an complex value\t';
+
+terminal NULL:
+	'\tNULL VALUE\t';
+
+terminal INDENT:
+	'\tindent with margin increased from previous\t';
+
+terminal MARGIN:
+	'\tindent with margin same as previous\t';
+
+terminal DEDENT:
+	'\tindent with margin decreased from previous\t';
+
+terminal ID:
+	'\tan id\t';
+
+terminal STR:
+	'\tan unquoted string\t';
+
+terminal KEY_STR:
+	'\tan unquoted key string\t';
+
+terminal NUMBER:
+	'positive integer value';
+
+terminal BOOLEAN:
+	'\tboolean value\t';
+
+terminal SL_COMMENT:
+	'#' !('\n' | '\r')* ('\r'? '\n')?;
+
+terminal EOL:
+	('\r' | '\n')+;
+
+terminal HIDDEN:
+	'other hidden tokens';
+	
+terminal ANY_OTHER:
+	.;

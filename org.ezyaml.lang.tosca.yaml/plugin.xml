@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+	<extension point="org.eclipse.emf.ecore.generated_package">
+		<package 
+			uri = "http://www.ezyaml.org/lang/tosca/Yaml"
+			class = "org.ezyaml.lang.tosca.yaml.YamlPackage"
+			genModel = "model/generated/Yaml.genmodel" />
+	</extension>
+</plugin>
