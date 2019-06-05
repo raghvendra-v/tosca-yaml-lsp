@@ -11,5 +11,6 @@ gradle/wrapper/gradle-wrapper.jar
 **/target
 **/.project
 org.ezyaml.lang.tosca.yaml.tests/YamlLanguageServer.log
+org.ezyaml.lang.tosca.yaml.tests/src/org/ezyaml/lang/tosca/tests/YamlParsingTest.xtend
 plugin.xml_gen
 YamlFlexer.java*

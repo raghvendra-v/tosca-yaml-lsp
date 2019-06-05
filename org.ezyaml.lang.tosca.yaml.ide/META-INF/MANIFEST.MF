@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Automatic-Module-Name: org.ezyaml.lang.tosca.yaml.ide
 Bundle-ManifestVersion: 2
 Bundle-Name: org.ezyaml.lang.tosca.yaml.ide
-Bundle-Vendor: My Company
+Bundle-Vendor: http://www.ezyaml.org
 Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: org.ezyaml.lang.tosca.yaml.ide; singleton:=true
 Bundle-ActivationPolicy: lazy
