@@ -30,7 +30,7 @@ class BulkYamlParserTest {
 	@Inject
 	ParseHelper<YamlDocument> parseHelper
 
-	static	String[] configFilePaths = #["C:/workspace/osm/devops/descriptor-packages", "C:/workspace/dsl-workspace/etsi"];
+	static	String[] configFilePaths = #["./test-resources/devops/descriptor-packages"];
 	
 		val dummy = new PrintStream(new OutputStream() {
 			override write(int b) throws IOException {

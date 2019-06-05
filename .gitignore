@@ -3,13 +3,13 @@
 **/.classpath
 **/bin
 **/build
-org.tosca.yaml/model
+org.ezyaml.lang.tosca.yaml/model
+org.ezyaml.lang.tosca.yaml/jflex-fragment-0.1.0.jar
 gradle/wrapper/gradle-wrapper.jar
 **/src-gen
 **/xtend-gen
 **/target
 **/.project
-org.tosca.yaml.generator.helper/extra-classes
-org.tosca.yaml.tests/YamlLanguageServer.log
+org.ezyaml.lang.tosca.yaml.tests/YamlLanguageServer.log
 plugin.xml_gen
 YamlFlexer.java*

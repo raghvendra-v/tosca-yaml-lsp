@@ -1,0 +1,3 @@
+[submodule "org.ezyaml.lang.tosca.yaml.tests/test-resources/devops"]
+	path = org.ezyaml.lang.tosca.yaml.tests/test-resources/devops
+	url = https://osm.etsi.org/gerrit/osm/devops.git
