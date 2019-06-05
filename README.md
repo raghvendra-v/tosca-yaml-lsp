@@ -1,4 +1,8 @@
-# tosca-yaml-lsp
+![Travis CI ](https://travis-ci.com/raghvendra-v/tosca-yaml-lsp.svg?branch=master)  
+    
+ 
+      
+# TOSCA YAML LSP
 TOSCA DSL grammer using the xtext framework
 
 This project bridges the gap between meta-model derived from TOSCA catalogue and 
@@ -21,6 +25,6 @@ Issues in yaml parsing
  + The following tags and types: !!set, !!omap, !!pairs, !!set, !!seq, !!bool, !!int, !!merge, !!null, !!timestamp, !!value, !!yaml;
  + TAG directives
 
-## Build process ## 
-`maven clean install`
-A [Bulk parsing Test](blob/master/org.ezyaml.lang.tosca.yaml.tests/src/org/ezyaml/lang/tosca/tests/BulkYamlParserTest.xtend) runs regression against all the yaml descriptors available in [Open Source MANO GIT](https://osm.etsi.org/gitweb/?p=osm/devops.git;a=summary "OSM MANO") 
+## build process ## 
+`maven clean install`  
+[Bulk parsing Test](org.ezyaml.lang.tosca.yaml.tests/src/org/ezyaml/lang/tosca/tests/BulkYamlParserTest.xtend) runs regression against all the yaml descriptors available in [Open Source MANO GIT](https://osm.etsi.org/gitweb/?p=osm/devops.git;a=summary "OSM MANO") 
