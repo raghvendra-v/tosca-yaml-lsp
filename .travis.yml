@@ -1,0 +1,9 @@
+sudo: false
+language: java
+
+notifications:
+  email:
+    recipients:
+    - raghvendrav@gmail.com
+    on_success: change
+    on_failure: always
