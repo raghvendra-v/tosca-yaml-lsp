@@ -17,7 +17,7 @@ Further improvements in pipeline
  + OpenAPI decorators in the generated POJO's to help exposure using spring-boot APIs
  + OGM annotations in the generated POJO's for mapping to a graph DB ( neo4j ) , support for spring-boot REST repository
  
-Issues in yaml parsing
+known issues in yaml parsing
  + Best to have a blank newline at the end of file, although it should work most of the time
  + Multi-documents (--- and ... markers);
  + Complex mapping keys and complex values starting with ?;
