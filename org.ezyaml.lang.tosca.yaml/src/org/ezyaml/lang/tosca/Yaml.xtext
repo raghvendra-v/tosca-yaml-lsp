@@ -1,32 +1,94 @@
-grammar org.ezyaml.lang.tosca.Yaml hidden(EOL, SL_COMMENT, HIDDEN, FOLDED_EOL)
+grammar org.ezyaml.lang.tosca.Yaml with org.eclipse.xtext.xbase.Xbase hidden(EOL, SL_COMMENT, HIDDEN, FOLDED_EOL)
 
 generate yaml "http://www.ezyaml.org/lang/tosca/Yaml"
+import "http://www.eclipse.org/xtext/common/JavaVMTypes"
 import "http://www.eclipse.org/emf/2002/Ecore" as ecore
-import "http://www.eclipse.org/xtext/common/JavaVMTypes" as java
 
 YamlDocument:
-	(content+=YamlStructure)*;
-
+	("---"? (content+=YamlStructure))*; /** TODO: enable multi-documents later*/
 YamlStructure:
-	YamlMappingExpr;
+	ToscaCatalogueVersion | ToscaImportStatement | ToscaTypesDeclaration | YamlMappingExpr;
 
+/******************** START : TOSCA specific grammar elements**********************/
+/*
+ * As per http://docs.oasis-open.org/tosca/TOSCA-Simple-Profile-YAML/v1.2/csd01/TOSCA-Simple-Profile-YAML-v1.2-csd01.html
+ */
+ToscaCatalogueVersion:
+	MARGIN? "tosca_definitions_version" ":" START_OF_RHS START_OF_STR version=STR END_OF_STR
+	END_OF_RHS;
+
+/*
+ * TOSCA-Simple-Profile-YAML-v1.2-csd01.html
+ * 3.5.8.2 Grammar
+ */
+ToscaImportStatement:
+	MARGIN? "imports" ":" START_OF_RHS 
+	ToscaFirstImport next+=ToscaNextImports* END_OF_SEQ END_OF_RHS
+;
+
+ToscaFirstImport:
+	(INDENT START_OF_SEQ "-" ((START_OF_STR importURI=STR END_OF_STR) | (multiLineImports=ToscaMultiLineImport) | ( keyedMultiLineImports=ToscaMultiLineImportwithKey) ))
+;
+ToscaNextImports:
+	(MARGIN START_OF_SEQ_ENTRY "-" ((START_OF_STR importURI=STR END_OF_STR) | 	(multiLineImports=ToscaMultiLineImport) | ( keyedMultiLineImports=ToscaMultiLineImportwithKey) ))
+;
+
+ToscaMultiLineImport:
+	 INDENT "file" ":" START_OF_RHS START_OF_STR importURI=STR END_OF_STR END_OF_RHS
+	(MARGIN "repository" ":" START_OF_RHS START_OF_STR repository=STR END_OF_STR END_OF_RHS)? &
+	(MARGIN "namespace_uri" ":" START_OF_RHS START_OF_STR namespace_uri=STR END_OF_STR END_OF_RHS)? &
+	(MARGIN "namespace_prefix" ":" START_OF_RHS START_OF_STR namespace_prefix=STR END_OF_STR END_OF_RHS)?;
+
+ToscaMultiLineImportwithKey:
+	MARGIN importsKey=KEY_STR ":" START_OF_RHS  ((  ToscaMultiLineImport ) | ( START_OF_STR singleLineImports+=STR END_OF_STR ) )END_OF_RHS
+;
+ToscaTypesDeclaration returns YamlMappingExpr:
+	(MARGIN | INDENT)? key=("data_types" | "capability_types" | "relationship_types" | "node_types") ":" START_OF_RHS
+	(INDENT? value+=ToscaTypesBlock)* END_OF_RHS;
+
+ToscaTypesBlock returns YamlRHS:
+	(INDENT entries+=ToscaType) (MARGIN entries+=ToscaType)*;
+
+ToscaType :
+	name=KEY_STR ":" START_OF_RHS ((INDENT entries+=ToscaTypeAttributes) (MARGIN entries+=ToscaTypeAttributes)*)*
+	END_OF_RHS;
+
+ToscaTypeAttributes:
+	ToscaSuperTypeDeclaration | ToscaTypeMembers | ToscaValidTargetTypes | YamlMappingEntry;
+
+ToscaSuperTypeDeclaration:
+	"derived_from" ":" START_OF_RHS START_OF_STR superType=[ToscaType|STR] END_OF_STR
+	END_OF_RHS;
+
+ToscaTypeMembers:
+	"properties" ":" START_OF_RHS (INDENT entries+=YamlMappingEntry) (MARGIN entries+=YamlMappingEntry)* END_OF_RHS;
+
+ToscaValidTargetTypes:
+	"valid_target_types" ":" START_OF_RHS YamlRHS END_OF_RHS;
+
+	/******************** END : TOSCA specific grammar elements*************************
+ * 
+ * 
+ */
 YamlMappingExpr:
-	(MARGIN|INDENT)? key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS)|(INDENT START_OF_SEQ value+=YamlSequenceExpr))* END_OF_RHS;
+	(MARGIN | INDENT)? key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS) | (INDENT START_OF_SEQ
+	value+=YamlSequenceExpr))* END_OF_RHS;
 
 YamlMappingEntry:
-	key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS)|((INDENT|MARGIN)? START_OF_SEQ value+=YamlSequenceExpr))* END_OF_RHS;
+	key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS) | ((INDENT | MARGIN)? START_OF_SEQ value+=YamlSequenceExpr))*
+	END_OF_RHS;
 
 YamlMap returns YamlRHS:
 	(MARGIN entries+=YamlMappingEntry)+;
 
 YamlSubNode returns YamlRHS:
-	(INDENT entries+=YamlMappingEntry)(MARGIN entries+=YamlMappingEntry)*;
-	
+	(INDENT entries+=YamlMappingEntry) (MARGIN entries+=YamlMappingEntry)*;
+
 YamlSequenceExpr:
-	( "-" entries+=(YamlRHS|YamlMap)) ( MARGIN START_OF_SEQ_ENTRY "-" entries+=(YamlRHS|YamlMap))* END_OF_SEQ;
+	("-" entries+=(YamlRHS | YamlMap)) (MARGIN START_OF_SEQ_ENTRY "-" entries+=(YamlRHS | YamlMap))* END_OF_SEQ;
 
 YamlRHS:
-	("[" Array) | ("{" Map) | Scalar | YamlSubNode ;
+	("[" Array) | ("{" Map) | Scalar | YamlSubNode;
 
 Array:
 	{Array} ((entries+=YamlRHS) ("," entries+=YamlRHS)*)? "]";
@@ -34,16 +96,18 @@ Array:
 Map:
 	{Map} ((entries+=MapEntry) ("," entries+=MapEntry)*)? "}";
 
-MapEntry:
+MapEntry returns StringToTypedValueMapEntry:
 	key=KEY_STR ":" value=YamlRHS;
 
 Scalar:
-	numValue=NUMBER | boolValue=BOOLEAN | (START_OF_STR ((INDENT | MARGIN | DEDENT)? stringValue+=STR)+ END_OF_STR) |
-	(stringValue+=STR);
-	
+	numValue=DECIMAL | boolValue=BOOLEAN | stringValue=MultiLineString | isNull?=NULL;
+
+MultiLineString returns ecore::EString:
+	(START_OF_STR ((INDENT | MARGIN | DEDENT)? STR)+ END_OF_STR) | (STR);
+
 terminal FOLDED_EOL:
-	'\t captures a newline but should be translated as SPACE\t'
-;
+	'\t captures a newline but should be translated as SPACE\t';
+
 terminal START_OF_STR:
 	'\t to indicate start of an unquoted string\t';
 
@@ -58,6 +122,7 @@ terminal END_OF_STR:
 
 terminal START_OF_SEQ_ENTRY:
 	'synthetic hidden tokens';
+
 terminal END_OF_SEQ:
 	'\t to indicate end of a sequence\t';
 
@@ -76,16 +141,13 @@ terminal MARGIN:
 terminal DEDENT:
 	'\tindent with margin decreased from previous\t';
 
-terminal ID:
-	'\tan id\t';
-
-terminal STR:
+terminal STR returns ecore::EString:
 	'\tan unquoted string\t';
 
-terminal KEY_STR:
+terminal KEY_STR returns ecore::EString:
 	'\tan unquoted key string\t';
 
-terminal NUMBER:
+terminal DECIMAL:
 	'positive integer value';
 
 terminal BOOLEAN:
@@ -99,6 +161,6 @@ terminal EOL:
 
 terminal HIDDEN:
 	'other hidden tokens';
-	
+
 terminal ANY_OTHER:
 	.;

@@ -44,8 +44,11 @@ Workflow {
 			fragment = JFlexFragment {
 				fullFlexFile = "org.ezyaml.lang.tosca.yaml/src/org/ezyaml/lang/tosca/parser/antlr/lexer/jflex/YamlFlexer.flex"
 			}
+			fragment = exporting.SimpleNamesFragment2{
+				
+			}
 			generator = {
-				generateStub = false
+				generateStub = true
 			}
 			formatter = {
 				generateStub = true
@@ -55,8 +58,13 @@ Workflow {
 				// Generates checks for @Deprecated grammar annotations, an IssueProvider and a corresponding PropertyPage
 				generateDeprecationValidation = true
 			}
+			commonTypesSupport = {
+				onlyEnabledIfGrammarIsUsed=false
+			}
 			junitSupport = {
 				junitVersion = "5"
+				generateXtendStub= false
+				generateStub = false
 			}
 		}
 	}

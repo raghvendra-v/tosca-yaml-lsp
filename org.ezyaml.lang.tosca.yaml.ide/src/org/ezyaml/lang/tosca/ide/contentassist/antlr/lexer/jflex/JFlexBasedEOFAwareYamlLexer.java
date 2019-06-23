@@ -3,9 +3,9 @@
  */
 package org.ezyaml.lang.tosca.ide.contentassist.antlr.lexer.jflex;
 
-import java.io.CharArrayReader;
 import java.io.Reader;
 import java.lang.reflect.Field;
+
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.RecognitionException;
@@ -51,6 +51,6 @@ public class JFlexBasedEOFAwareYamlLexer extends InternalYamlLexer {
 	
 	@Override
 	public void reset() {
-		delegate.reset(new EOFAwareReader(data, 0, data_length));
+		delegate.reset(new EOFEmitterReader(data, 0, data_length));
 	}
 }

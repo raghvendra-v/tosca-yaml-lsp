@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta_model>
+	<data_types>
+		<derived_from />
+		<description />
+		<version />
+		<metadata />
+		<constraints />
+		<properties>
+			<type ignore="true" />
+			<description ignore="true" />
+			<required ignore="true" />
+			<default ignore="true" />
+			<status ignore="true" />
+			<constraints ignore="true">
+				<equal />
+				<greater_than />
+				<greater_or_equal />
+				<less_than />
+				<less_or_equal />
+				<in_range />
+				<valid_values />
+				<length />
+				<min_length />
+				<max_length />
+				<pattern />
+			</constraints>
+			<entry_schema ignore="true" />
+		</properties>
+	</data_types>
+	<node_types>
+		<derived_from />
+		<description />
+		<version ignore="true" />
+		<metadata ignore="true" />
+		<constraints ignore="true"/>
+		<properties ignore="true">
+			<type ignore="true" />
+			<description ignore="true" />
+			<required ignore="true" />
+			<default ignore="true" />
+			<status ignore="true" />
+			<constraints ignore="true">
+				<equal />
+				<greater_than />
+				<greater_or_equal />
+				<less_than />
+				<less_or_equal />
+				<in_range />
+				<valid_values />
+				<length />
+				<min_length />
+				<max_length />
+				<pattern />
+			</constraints>
+			<entry_schema ignore="true" />
+		</properties>
+	</node_types>
+	<repositories>
+		<description />
+		<url />
+		<credential />
+	</repositories>
+	<imports>
+		<file />
+		<repository />
+		<namespace_uri />
+		<namespace_prefix />
+	</imports>
+	<attributes>
+		<type />
+		<description />
+		<required />
+		<default />
+		<status />
+		<entry_schema />
+	</attributes>
+</meta_model>

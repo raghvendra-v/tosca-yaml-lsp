@@ -5,16 +5,22 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.TokenSource;
 import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
+import org.ezyaml.lang.tosca.jvmmodel.ToscaMetaModel;
 
 @SuppressWarnings({"all"})
 %%
@@ -25,12 +31,14 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 	private static final char START_OF_RHS = ':';
 	private static final char START_OF_SEQ = '-';
 	private static final char START_OF_STR = '\"';
+	private static final char START_OF_STR_INDENT = '\'';
 	private static final Pattern INDENT = Pattern.compile("(\\s+)(.*)[\\r\\n]*");
 	private static final Pattern MAP_SEPERATOR = Pattern.compile("(?<!:\\s)((:[\\ \\r\\n]+)|(:$)).*[\\r\\n]*");
 	private static final Pattern SEQUENCE_START = Pattern.compile("(-\\s*).*[\\r\\n]*");
 
 
 	public final static TokenSource createTokenSource(Reader reader) {
+		ToscaMetaModel.getInstance();
 		return new YamlFlexer(reader);
 	}
 
@@ -41,23 +49,29 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 		offset = 0;
 	}
 
-	private static final HashMap<Integer, String> DICTIONARY = new HashMap();
+	private static final HashMap<Integer, String> DICTIONARY = new HashMap<Integer, String>();
+	private static final HashMap<String, Integer> KEYWORDS = new HashMap<String, Integer>();
 	private static final String PREFIX = "RULE_";
 	static {
 		/* all this pain to print the token names instead of numbers */
 		Class<? extends Object> c = InternalYamlParser.class;
 		Field[] fields = c.getDeclaredFields();
+		List<String> keywords = Arrays.asList(InternalYamlParser.tokenNames);
 		for (Field f : fields) {
 			if (f.getType() == int.class && f.getModifiers() == 25) {
 				try {
-					DICTIONARY.put(f.getInt(null), f.getName().replace(PREFIX, ""));
+					int value = f.getInt(null);
+					String name = f.getName();
+					DICTIONARY.put(value, f.getName().replace(PREFIX, ""));
+					if ( !name.startsWith(PREFIX) && keywords.contains(name)) {
+						KEYWORDS.put(name.substring(0,1).toLowerCase().concat(name.substring(1)), value);
+					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					e.printStackTrace();
 				}
 			}
 		}
 	}
-
 	class MarkerStack {
 		int indent;
 		Stack<Character> stack;
@@ -137,48 +151,58 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 			return pendingTokens.toString();
 		}
 	}
-
+	private List<Character> getKeywordHierarchy() {
+		List<Character> hierarchy = new ArrayList<Character>();
+		for (int i = markerStack.size() - 1; i >= 0; i--) {
+			 OptionalInt x = markerStack.get(i).stack.stream().mapToInt(v->v).filter(c -> c >= ToscaMetaModel.START_UTF8_CHAR_INDEX).min();
+			if ( x.isPresent()) 
+				hierarchy.add((char)x.getAsInt());
+			
+		}
+		return hierarchy;
+	}
 	protected Stack<Integer> indentationStack = new Stack<Integer>();
 	protected PendingTokenHelper pendingTokens = new PendingTokenHelper();
 	protected Stack<Character> inlineCollectionsStack = new Stack<Character>();
-	protected Stack<MarkerStack> markerStack = new Stack();
+	protected Stack<MarkerStack> markerStack = new Stack<MarkerStack>();
 
-	private Queue<CommonTokenWithText> stream = new LinkedList<>();
-	{
-		indentationStack.push(0);
-	}
 	private int currentIndent = 0;
 
 	public Token nextToken() {
+	/*
 		System.out.print("markerStack=" + markerStack);
 		System.out.print(" indentationStack=" + indentationStack);
 		System.out.print(" pendingTokens=" + pendingTokens);
 		System.out.print(" inlineCollectionsStack=" + inlineCollectionsStack);
 		System.out.println(" yystate()=" + yystate());
-		
+	*/
+
 		try {
 			Token result = pendingTokens.getPending();
 			int type = -1;
-			if ( result == null ) {
-				type=advance();
+			if (result == null) {
+				type = advance();
 				result = pendingTokens.getPending();
-				if (result != null ) {
-					pendingTokens.push(type,yytext());
+				if (result != null) {
+					pendingTokens.push(type, yytext());
 				} else {
 					result = new CommonTokenWithText(yytext(), type, Token.DEFAULT_CHANNEL, offset);
 					offset += yylength();
 				}
 			}
-			System.out.println("result=" + result);			
+			if (result.getType() == RULE_KEY_STR && KEYWORDS.containsKey(result.getText())) {
+				List<Character> hierarchy = getKeywordHierarchy();
+				char marker = ToscaMetaModel.getInstance().getMarkerCharacter(result.getText(), hierarchy);
+				if (marker != 0) {
+					pushMarkerToken(currentIndent, marker);
+					result.setType(KEYWORDS.get(result.getText()));
+				}
+			}
+			/*System.out.println("result=" + result);*/
 			return result;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	private boolean isSynthetic(int token) {
-		return token == RULE_END_OF_STR || token == RULE_END_OF_RHS || token == RULE_END_OF_SEQ
-				|| token == RULE_START_OF_STR || token == RULE_START_OF_SEQ || token == RULE_START_OF_RHS;
 	}
 
 	@Override
@@ -227,8 +251,8 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 		}
 		String indentTypeStr = DICTIONARY.containsKey(INDENT_TYPE) ? DICTIONARY.get(INDENT_TYPE)
 				: String.valueOf(INDENT_TYPE);
-		System.out.println("YYINITIAL INDENT : [current=" + currentIndent + " ,previous=" + prevIndent
-				+ " ] returning (" + indentTypeStr + " ) ");
+		/*System.out.println("YYINITIAL INDENT : [current=" + currentIndent + " ,previous=" + prevIndent
+				+ " ] returning (" + indentTypeStr + " ) ");*/
 		return INDENT_TYPE;
 	}
 
@@ -248,6 +272,16 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 			markerStack.peek().stack.push(markerToken);
 			pendingTokens.push(RULE_START_OF_STR);
 			break;
+		case START_OF_STR_INDENT:
+			boolean isIndentRecorded=false;
+			for (int i=markerStack.size()-1;i>=0;i--) {
+				if ( markerStack.get(i).stack.contains(START_OF_STR_INDENT)) {
+					isIndentRecorded=true;
+					break;
+				}
+			}
+			if ( !isIndentRecorded ) { markerStack.peek().stack.push(markerToken); currentIndent=indent;handleINDENT();}
+			break;
 		case START_OF_SEQ:
 			if (markerStack.peek().stack.contains(START_OF_SEQ)) {
 				pendingTokens.push(RULE_START_OF_SEQ_ENTRY);
@@ -256,10 +290,19 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 				markerStack.peek().stack.push(markerToken);
 			}
 			break;
-		default:
+		default: markerStack.peek().stack.push(markerToken);
 		}
 	}
-
+	private int getMultilineStringIndent() {
+		int indent=currentIndent;
+		for (int i=markerStack.size()-1;i>=0;i--) {
+			if ( markerStack.get(i).stack.contains(START_OF_STR_INDENT)) {
+				indent=markerStack.get(i).indent;
+				break;
+			}
+		}
+		return indent;
+	}
 	private void handleINDENT() {
 		handleINDENT(currentIndent); 
 	}
@@ -293,7 +336,7 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 		for ( int i=0;i<indentLen;i++)indentText.append(' ');
 		zzStartRead+=indentLen;yycolumn+=indentLen;
 		pendingTokens.push(KIND_OF_INDENT,indentText.toString());
-		System.out.println("handleINDENT indentationStack=" + indentationStack);
+		/*System.out.println("handleINDENT indentationStack=" + indentationStack);*/
 	}
 
 	private void fillClosingTokens(int prevIndent, int currIndent) {
@@ -302,7 +345,7 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 			while (!markerStack.empty() && process && markerStack.peek().indent >= currIndent) {
 				if (markerStack.peek().stack.empty()) {
 					markerStack.pop();
-					if (indentationStack.peek() > currentIndent && !indentationStack.empty()) indentationStack.pop();
+					if (!indentationStack.empty() && indentationStack.peek() > currentIndent) indentationStack.pop();
 					continue;
 				}
 				char marker = markerStack.peek().stack.pop();
@@ -327,7 +370,7 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 				default:
 					break;
 				}
-				if (type != -10) { pendingTokens.push(type); } else { if (process) { System.out.println("Error!");pendingTokens.push(type); }}
+				if (type != -10) { pendingTokens.push(type); } /*else { if (process) { System.out.println("Error!");pendingTokens.push(type); }}*/
 			}
 		}
 	}
@@ -352,8 +395,15 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 		}
 		return nextState;
 	}
+	private void handleKeywordAsKey() {
+		Matcher indent_matcher=INDENT.matcher(yytext());
+		int firstIndent=( indent_matcher.matches()? indent_matcher.end(1):0);
+		currentIndent=firstIndent+yycolumn;
+		handleINDENT(firstIndent);//pushes a marker type INDENT, but with a lesser spread, same as first
+		yybegin(SEPERATOR);
+	}
 %}
-%debug
+/* %debug */
 %unicode
 %column
 %line
@@ -364,12 +414,15 @@ import org.ezyaml.lang.tosca.parser.antlr.internal.InternalYamlParser;
 %int
 %eofval{
 		pendingTokens.generatePendingTokens(0);
-		System.out.println("markerStack="+markerStack);
+		/*System.out.println("markerStack="+markerStack);*/
 		return Token.EOF;
 %eofval}
 
 U_NUMBER = [0-9]+ ("." [0-9]+)? | "." [0-9]+
-NUMBER = ("+"|"-")? {U_NUMBER}
+NUMBER = ("+"|"-")? {U_NUMBER} ( "e" ("+"|"-")? [1-9] [0-9]* )?
+NULL = "null" | "Null" | "NULL" | "~"
+OCTAL = "0o" [0-7]+
+HEX =  "0x" [0-9a-fA-F]+
 BOOLEAN= y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF
 STRING= ({ID})(([\ ]+{ID})|([\-\.]+{ID}))*
 SINGLE_QUOTED_STRING= "'" [^']* "'"?
@@ -394,51 +447,20 @@ INDENT= [\ ]+
 
 <RHS_VAL> {
 	{INDENT}						{  if (yycolumn==0) {  currentIndent=yylength(); return getIndentType(); } else { return RULE_HIDDEN; }  }
-	{NUMBER}						{  yybegin(YYINITIAL); return RULE_NUMBER;}
+	{NULL}							{  yybegin(YYINITIAL); return RULE_NULL;}
+	{HEX}		|						
+	{OCTAL}		|					
+	{NUMBER}						{  yybegin(YYINITIAL); return RULE_DECIMAL;}
 	{BOOLEAN}						{  yybegin(YYINITIAL); return RULE_BOOLEAN;}
-	[^\ \[{] [^#\r\n]*				{  pushMarkerToken(currentIndent, START_OF_STR); yypushback(yylength()); yybegin(MIXED_STRING); }
+	[^\ \[{#\r\n] [^#\r\n]*			{  pushMarkerToken(currentIndent, START_OF_STR); yypushback(yylength()); yybegin(MIXED_STRING); }
 }
 <FIRST_FOLDED_LINE, FIRST_FOLDED_LINE_OF_BLK> {
 	{EOL}							{ return RULE_EOL; }
-	{INDENT} 						{  
-										if (yycolumn==0) {
-											currentIndent=yylength();
-											indentationStack.push(currentIndent);
-											pushMarkerToken(currentIndent, START_OF_STR); 
-											if ( yystate() == FIRST_FOLDED_LINE ) { 
-													indentationStack.pop();
-													yybegin(FOLDED_RHS_STRING);
-											} else if ( yystate() == FIRST_FOLDED_LINE_OF_BLK ) {
-													indentationStack.pop();
-													yybegin(BLK_FOLDED_RHS_STRING);
-											}
-											return RULE_MARGIN;
-										} 
-									}
+	{INDENT} 						{   if (yycolumn==0) { currentIndent=yylength(); indentationStack.push(currentIndent); pushMarkerToken(currentIndent, START_OF_STR);  if ( yystate() == FIRST_FOLDED_LINE ) {  indentationStack.pop(); yybegin(FOLDED_RHS_STRING); } else if ( yystate() == FIRST_FOLDED_LINE_OF_BLK ) { indentationStack.pop(); yybegin(BLK_FOLDED_RHS_STRING); } return RULE_MARGIN; }  }
 }
 <FOLDED_RHS_STRING, BLK_FOLDED_RHS_STRING> {
-	{INDENT}						{  
-										if (yycolumn==0) {
-											if( yylength() < currentIndent ) {
-												indentationStack.push(currentIndent); //just to enable fillClosingTokens
-												yypushback(yylength()); yybegin(YYINITIAL);
-											} else if( yylength() > currentIndent ) {
-												yypushback(yylength()-currentIndent);
-												return RULE_MARGIN;
-											} else {
-												return RULE_HIDDEN;
-											}
-										} else {
-											return RULE_STR;
-										} 
-									}
-	{INDENT} / {EOL}				{  
-										if (yycolumn==0) {
-												return RULE_HIDDEN;
-										} else {
-											return RULE_STR;
-										} 
-									}	
+	{INDENT}						{   if (yycolumn==0) { if( yylength() < currentIndent ) { indentationStack.push(currentIndent); /* just to enable fillClosingTokens */ yypushback(yylength()); yybegin(YYINITIAL); } else if( yylength() > currentIndent ) { yypushback(yylength()-currentIndent); return RULE_MARGIN; } else { return RULE_HIDDEN; } } else { return RULE_STR; }  }
+	{INDENT} / {EOL}				{   if (yycolumn==0) { return RULE_HIDDEN; } else { return RULE_STR; }  }
 	[^\ \r\n] [^#\r\n]*	/ (({SL_COMMENT})? {EOL})
 									{  return RULE_STR; }
 	{EOL} 							{  if ( yystate() == BLK_FOLDED_RHS_STRING ) { return RULE_FOLDED_EOL; } else { return RULE_EOL;} }
@@ -447,17 +469,16 @@ INDENT= [\ ]+
 	[^\ \],\r\n]+ 	{ yypushback(yylength()); yybegin(INLINE_SEQUENCE_ENTRY);}
 	"," 			{ return Comma;}
 	"]" 			{ int state=getNextState(START_OF_IN_SEQ); if (state!=-100) {yybegin(state);} return RightSquareBracket;}
-	{EOL}			{ return RULE_EOL; }
 }
 <INLINE_SEQUENCE_ENTRY> {
-	{NUMBER} / [\ ]*[,\]]						{  yybegin(INLINE_SEQUENCE); return RULE_NUMBER;	}
+	{NUMBER} / [\ ]*[,\]]						{  yybegin(INLINE_SEQUENCE); return RULE_DECIMAL;	}
 	{BOOLEAN} / [\ ]*[,\]]						{  yybegin(INLINE_SEQUENCE); return RULE_BOOLEAN;	}
 	{ANY_STRING} / [\ ]*[,\]]					{  yybegin(INLINE_SEQUENCE); return RULE_STR; 		}
 	[^,\[\]{: ] [^,\[\]{:]+ / [\ ]*[,\]]		{  yybegin(INLINE_SEQUENCE); return RULE_STR; 		}
 }
 
 <INLINE_MAPPING_KEY> {
-	{NUMBER}  / ": "						{ yybegin(INLINE_MAPPING_SEPARATOR); return RULE_NUMBER; }
+	{NUMBER}  / ": "						{ yybegin(INLINE_MAPPING_SEPARATOR); return RULE_DECIMAL; }
 	{BOOLEAN} / ": "						{ yybegin(INLINE_MAPPING_SEPARATOR); return RULE_BOOLEAN; }
 	{ANY_STRING} / ": "						{ yybegin(INLINE_MAPPING_SEPARATOR); return RULE_KEY_STR; }
 }
@@ -465,25 +486,29 @@ INDENT= [\ ]+
 		{SEPARATOR}  / [\ ]    				{   yybegin(INLINE_MAPPING_VALUE); return Colon;   }
 }
 <INLINE_MAPPING_VALUE> {
-	{NUMBER}  / [\ ]*[,}]						{ yybegin(INLINE_MAPPING); return RULE_NUMBER; }
+	{NUMBER}  / [\ ]*[,}]						{ yybegin(INLINE_MAPPING); return RULE_DECIMAL; }
 	{BOOLEAN}  / [\ ]*[,}]						{ yybegin(INLINE_MAPPING); return RULE_BOOLEAN;	}
 	{ANY_STRING}  / [\ ]*[,}]   				{ yybegin(INLINE_MAPPING); return RULE_STR; }
 	[^,\[\{: ] [^,\[\{:]+ / [\ ]*[,}]    		{ yybegin(INLINE_MAPPING); return RULE_STR; }
 }
 
 <INLINE_MAPPING> {
-	[^\ ,}]+  				{ yypushback(yylength()); yybegin(INLINE_MAPPING_KEY);}
+	[^\ ,}\r\n]+  			{ yypushback(yylength()); yybegin(INLINE_MAPPING_KEY);}
 	","						{ yybegin(INLINE_MAPPING_KEY); return Comma;}
 	"}" 					{ int state=getNextState(START_OF_IN_MAP); if (state!=-100) {yybegin(state);} return RightCurlyBracket;}
+}
+<INLINE_MAPPING,INLINE_MAPPING_VALUE,INLINE_SEQUENCE> {
+		{EOL}			{ return RULE_EOL; }
+		[\ ]+			{ return RULE_HIDDEN;  }
 }
 <MAPPING_EXPR> 		{
 	{ANY_STRING}[\ ]* / ":"  {  yybegin(SEPERATOR); return RULE_KEY_STR; }
 }
 
 <SEPERATOR> {
-		{SEPARATOR} [\ ]+ ">"   / ([\ ]* ({SL_COMMENT})? {EOL})		{ 	yybegin(FIRST_FOLDED_LINE); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);  }
-		{SEPARATOR} [\ ]+ ">-"  / ([\ ]* ({SL_COMMENT})? {EOL})		{ 	yybegin(FIRST_FOLDED_LINE); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);  }
-		{SEPARATOR} [\ ]+ "|"   / ([\ ]* ({SL_COMMENT})? {EOL})		{ 	yybegin(FIRST_FOLDED_LINE_OF_BLK); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);  }
+		{SEPARATOR} [\ ]+   ">"   / (   [\ ]* ({SL_COMMENT})? {EOL})		{ 	yybegin(FIRST_FOLDED_LINE); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);}
+		{SEPARATOR} [\ ]+   ">-"  / (  [\ ]* ({SL_COMMENT})? {EOL})			{ 	yybegin(FIRST_FOLDED_LINE); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);}
+		{SEPARATOR} [\ ]+    "|"  / (   [\ ]* ({SL_COMMENT})? {EOL})		{ 	yybegin(FIRST_FOLDED_LINE_OF_BLK); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);  }
 		{SEPARATOR}  / (({SL_COMMENT})? {EOL})    				{ 	yybegin(RHS_VAL); pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);  }
 		{SEPARATOR}  / [\ ]    					{ 	pendingTokens.push(Colon,yytext()); pushMarkerToken(currentIndent, START_OF_RHS);  }
 		[\ ]									{ 	yybegin(RHS_VAL); return RULE_HIDDEN;  }
@@ -497,8 +522,8 @@ INDENT= [\ ]+
 
 <MIXED_STRING> {
 	{ANY_STRING}   	 |
-	[^\# \r\n] [^#\r\n]* 		     {  if( yycolumn<currentIndent) { yypushback(yylength());  yybegin(YYINITIAL); } else {return RULE_STR;}}
-	{INDENT} / (({SL_COMMENT})? {EOL})     {  return RULE_HIDDEN; }
+	[^\# \r\n\-] [^#\r\n]* 		     		{  if( yycolumn<currentIndent) { yypushback(yylength());  yybegin(YYINITIAL); } else {return RULE_STR;}}
+	{INDENT} / (({SL_COMMENT})? {EOL})		{  return RULE_HIDDEN; }
 }
 
 <YYINITIAL> {
@@ -508,7 +533,6 @@ INDENT= [\ ]+
 													Matcher indent_matcher=INDENT.matcher(yytext());
 													currentIndent=yycolumn+ ( indent_matcher.matches()?indent_matcher.end(1):0);
 													handleINDENT();
-													//zzStartRead+=(currentIndent-yycolumn); yycolumn+=(currentIndent-yycolumn); //this is like yypushforward
 													yybegin(SEPERATOR); return RULE_KEY_STR;
 												}
 {INDENT}? "-" {INDENT} ( {ESCAPED_DQ_STRING} | {ESCAPED_SQ_STRING} | {SINGLE_QUOTED_STRING} | {DOUBLE_QUOTED_STRING}  )  / ([\ ]* (({SL_COMMENT})? {EOL}))
@@ -523,8 +547,12 @@ INDENT= [\ ]+
 													pendingTokens.push(HyphenMinus,"-");
 													pendingTokens.push(RULE_HIDDEN,yytext().substring(1,secondIndent));
 													pushMarkerToken(currentIndent, START_OF_STR); 
-													//zzStartRead+=currentIndent; yycolumn+=currentIndent; //this is like yypushforward of marker
+													zzStartRead+=secondIndent; //yycolumn+=currentIndent; this is like yypushforward of marker
 													return RULE_STR; 
+												}
+"---" / (({SL_COMMENT})? {EOL})					{
+													currentIndent=0;handleINDENT();
+													return HyphenMinusHyphenMinusHyphenMinus;
 												}
 {INDENT}? [\-] ([\ ]+ [^\'\"#\r\n]+)? / ( ":" ([\ ] .*)? (({SL_COMMENT})? {EOL}) )
 												{
@@ -537,7 +565,7 @@ INDENT= [\ ]+
 													pushMarkerToken(currentIndent, START_OF_SEQ);			
 													yypushback(yylength()-1);
 													return(HyphenMinus);
-												}												
+												}
 //Jflex expressions were not cutting it, hence match whole line
 {INDENT}? [^\'\"#\-\ \r\n] [^#\r\n]+ / (({SL_COMMENT})? {EOL})  					
 												{
@@ -551,6 +579,19 @@ INDENT= [\ ]+
 														yypushback(yylength() - mapMatcher.start(1));
 														yybegin(SEPERATOR); return RULE_KEY_STR; 
 													} else if ( (yycolumn+firstIndent) >= currentIndent ) {
+														int start = yycolumn;
+														pushMarkerToken(start+firstIndent, START_OF_STR_INDENT); //currentIndent=yycolumn+firstIndent; handleINDENT(); done here
+														int str_indent = getMultilineStringIndent();
+														if ( start != yycolumn) {
+															yypushback(yylength());
+														} else if ((start+firstIndent) > str_indent) {
+															pendingTokens.push(RULE_MARGIN,yytext().substring(0,str_indent));
+															pendingTokens.push(RULE_STR,yytext().substring(str_indent,(firstIndent-str_indent)));
+															yypushback(yylength() - firstIndent);
+														} else if ( (start+firstIndent) == currentIndent ) {
+															pendingTokens.push(RULE_MARGIN,yytext().substring(0,str_indent));
+															yypushback(yylength() - firstIndent);
+														}																																										
 														yybegin(MIXED_STRING);
 													} /*else {
 														return RULE_HIDDEN; //catch all , so that tokenizer does not fail

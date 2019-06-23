@@ -3,23 +3,22 @@
  
       
 # TOSCA YAML LSP
-TOSCA DSL grammer using the xtext framework
+[TOSCA](http://docs.oasis-open.org/tosca/TOSCA-Simple-Profile-YAML/v1.2/TOSCA-Simple-Profile-YAML-v1.2.html) DSL grammar using the Xtext framework
 
 This project bridges the gap between meta-model derived from TOSCA catalogue and 
 Java Object-Graph model.
 It features 
- + [Xtext](https://github.com/eclipse/xtext "Eclipse Xtext™") based grammer to parse generic YAML
- + Xtext's native JvmModel translator to generate Java POJOs corresponding to the type definitions in the catalogue
- + [theia](https://github.com/theia-ide "theia-ide")  based cloud editor for tosca catalogue
- + Eclipse plugin to edit YAMLs
-
-Further improvements in pipeline
- + OpenAPI decorators in the generated POJO's to help exposure using spring-boot APIs
- + OGM annotations in the generated POJO's for mapping to a graph DB ( neo4j ) , support for spring-boot REST repository
+ + [x] [Xtext](https://github.com/eclipse/xtext "Eclipse Xtext™") based grammer to parse generic YAML
+ + [x] Xtext's native JvmModel translator to generate Java POJOs corresponding to the type definitions in the catalogue
+ + [ ] [theia](https://github.com/theia-ide "theia-ide")  based cloud editor for [tosca](http://docs.oasis-open.org/tosca/TOSCA-Simple-Profile-YAML/v1.2/TOSCA-Simple-Profile-YAML-v1.2.html 
+ "TOSCA Simple Profile in YAML Version 1.2") catalogue
+ + [x] Eclipse plugin to edit YAMLs
+ + [ ] OpenAPI decorators in the generated POJO's to help exposure using spring-boot APIs
+ + [ ] OGM annotations in the generated POJO's for mapping to a graph DB ( neo4j ) , support for spring-boot REST repository
  
-known issues in yaml parsing
- + Best to have a blank newline at the end of file, although it should work most of the time
- + Multi-documents (--- and ... markers);
+known issues in YAML parsing
+ + Best to have a blank newline at the end of file, although it should work most of the time without them 
+ + multiple documents (--- and ... markers);
  + Complex mapping keys and complex values starting with ?;
  + Tagged values as keys;
  + The following tags and types: !!set, !!omap, !!pairs, !!set, !!seq, !!bool, !!int, !!merge, !!null, !!timestamp, !!value, !!yaml;

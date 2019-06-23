@@ -7,4 +7,13 @@
 			class = "org.ezyaml.lang.tosca.yaml.YamlPackage"
 			genModel = "model/generated/Yaml.genmodel" />
 	</extension>
+	<extension point="org.eclipse.core.contenttype.contentTypes">
+		<content-type
+			base-type="org.eclipse.core.runtime.text"
+			file-extensions="yaml,yml"
+			id="org.ezyaml.lang.tosca.Yaml.contenttype"
+			name="Yaml File"
+			priority="normal">
+		</content-type>
+	</extension>
 </plugin>

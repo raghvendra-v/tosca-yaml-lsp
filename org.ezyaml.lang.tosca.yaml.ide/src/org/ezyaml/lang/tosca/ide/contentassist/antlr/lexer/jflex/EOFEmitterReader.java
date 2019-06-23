@@ -1,19 +1,19 @@
-package org.ezyaml.lang.tosca.parser.antlr.lexer.jflex;
+package org.ezyaml.lang.tosca.ide.contentassist.antlr.lexer.jflex;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
 
 /* Appends a newline char in the end of stream if not found already*/
-public class EOFAwareReader extends CharArrayReader {
+public class EOFEmitterReader extends CharArrayReader {
 
 	private boolean isEOFReached = false;
 	private char lastCharRead;
 
-	public EOFAwareReader(char[] buf) {
+	public EOFEmitterReader(char[] buf) {
 		super(buf);
 	}
 
-	public EOFAwareReader(char[] data, int i, int data_length) {
+	public EOFEmitterReader(char[] data, int i, int data_length) {
 		super(data, i, data_length);
 	}
 
@@ -22,7 +22,7 @@ public class EOFAwareReader extends CharArrayReader {
 		int c = super.read();
 		if (c == -1) {
 			if (!isEOFReached && lastCharRead != '\r' && lastCharRead != '\n') {
-				c = (int) '\r';
+				c = (int) '\n';
 				isEOFReached = true;
 			}
 		} else {

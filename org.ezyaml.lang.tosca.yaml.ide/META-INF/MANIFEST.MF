@@ -11,7 +11,8 @@ Require-Bundle: org.ezyaml.lang.tosca.yaml,
  org.eclipse.xtext.xbase.ide,
  org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: org.ezyaml.lang.tosca.ide.contentassist.antlr,
+Export-Package: org.ezyaml.lang.tosca.ide,
+ org.ezyaml.lang.tosca.ide.contentassist.antlr,
  org.ezyaml.lang.tosca.ide.contentassist.antlr.internal,
  org.ezyaml.lang.tosca.ide.contentassist.antlr.lexer,
  org.ezyaml.lang.tosca.ide.contentassist.antlr.lexer.jflex
