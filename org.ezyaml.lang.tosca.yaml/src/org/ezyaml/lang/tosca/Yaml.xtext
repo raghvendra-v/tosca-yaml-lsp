@@ -17,31 +17,32 @@ ToscaCatalogueVersion:
 	MARGIN? "tosca_definitions_version" ":" START_OF_RHS START_OF_STR version=STR END_OF_STR
 	END_OF_RHS;
 
-/*
+	/*
  * TOSCA-Simple-Profile-YAML-v1.2-csd01.html
  * 3.5.8.2 Grammar
  */
 ToscaImportStatement:
-	MARGIN? "imports" ":" START_OF_RHS 
-	ToscaFirstImport next+=ToscaNextImports* END_OF_SEQ END_OF_RHS
-;
+	MARGIN? "imports" ":" START_OF_RHS
+	ToscaFirstImport next+=ToscaNextImports* END_OF_SEQ END_OF_RHS;
 
 ToscaFirstImport:
-	(INDENT START_OF_SEQ "-" ((START_OF_STR importURI=STR END_OF_STR) | (multiLineImports=ToscaMultiLineImport) | ( keyedMultiLineImports=ToscaMultiLineImportwithKey) ))
-;
+	(INDENT START_OF_SEQ "-" ((START_OF_STR importURI=STR END_OF_STR) |
+	(keyedMultiLineImports=ToscaMultiLineImportwithKey) | (multiLineImports=ToscaMultiLineImport)));
+
 ToscaNextImports:
-	(MARGIN START_OF_SEQ_ENTRY "-" ((START_OF_STR importURI=STR END_OF_STR) | 	(multiLineImports=ToscaMultiLineImport) | ( keyedMultiLineImports=ToscaMultiLineImportwithKey) ))
-;
+	(MARGIN START_OF_SEQ_ENTRY "-" ((START_OF_STR importURI=STR END_OF_STR) |
+	(keyedMultiLineImports=ToscaMultiLineImportwithKey) | (multiLineImports=ToscaMultiLineImport)));
 
 ToscaMultiLineImport:
-	 INDENT "file" ":" START_OF_RHS START_OF_STR importURI=STR END_OF_STR END_OF_RHS
+	(INDENT | MARGIN) "file" ":" START_OF_RHS START_OF_STR importURI=STR END_OF_STR END_OF_RHS
 	(MARGIN "repository" ":" START_OF_RHS START_OF_STR repository=STR END_OF_STR END_OF_RHS)? &
 	(MARGIN "namespace_uri" ":" START_OF_RHS START_OF_STR namespace_uri=STR END_OF_STR END_OF_RHS)? &
 	(MARGIN "namespace_prefix" ":" START_OF_RHS START_OF_STR namespace_prefix=STR END_OF_STR END_OF_RHS)?;
 
 ToscaMultiLineImportwithKey:
-	MARGIN importsKey=KEY_STR ":" START_OF_RHS  ((  ToscaMultiLineImport ) | ( START_OF_STR singleLineImports+=STR END_OF_STR ) )END_OF_RHS
-;
+	MARGIN importsKey=KEY_STR ":" START_OF_RHS ((ToscaMultiLineImport) | (START_OF_STR singleLineImports+=STR
+	END_OF_STR)) END_OF_RHS;
+
 ToscaTypesDeclaration returns YamlMappingExpr:
 	(MARGIN | INDENT)? key=("data_types" | "capability_types" | "relationship_types" | "node_types") ":" START_OF_RHS
 	(INDENT? value+=ToscaTypesBlock)* END_OF_RHS;
@@ -49,9 +50,9 @@ ToscaTypesDeclaration returns YamlMappingExpr:
 ToscaTypesBlock returns YamlRHS:
 	(INDENT entries+=ToscaType) (MARGIN entries+=ToscaType)*;
 
-ToscaType :
-	name=KEY_STR ":" START_OF_RHS ((INDENT entries+=ToscaTypeAttributes) (MARGIN entries+=ToscaTypeAttributes)*)*
-	END_OF_RHS;
+ToscaType:
+	(name=KEY_STR ":" START_OF_RHS ((INDENT entries+=ToscaTypeAttributes) (MARGIN entries+=ToscaTypeAttributes)*)*
+	END_OF_RHS);
 
 ToscaTypeAttributes:
 	ToscaSuperTypeDeclaration | ToscaTypeMembers | ToscaValidTargetTypes | YamlMappingEntry;
@@ -70,9 +71,16 @@ ToscaValidTargetTypes:
  * 
  * 
  */
+YamlAnchorRef:
+	"*" ref=[YamlAnchor|STR];
+
+YamlAnchor:
+	"&" name=STR;
+
 YamlMappingExpr:
-	(MARGIN | INDENT)? key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS) | (INDENT START_OF_SEQ
-	value+=YamlSequenceExpr))* END_OF_RHS;
+	(MARGIN | INDENT)? key=KEY_STR ":" START_OF_RHS (YamlAnchor? ((INDENT? value+=YamlRHS) | (INDENT
+	START_OF_SEQ
+	value+=YamlSequenceExpr))*) END_OF_RHS;
 
 YamlMappingEntry:
 	key=KEY_STR ":" START_OF_RHS ((INDENT? value+=YamlRHS) | ((INDENT | MARGIN)? START_OF_SEQ value+=YamlSequenceExpr))*
@@ -88,7 +96,7 @@ YamlSequenceExpr:
 	("-" entries+=(YamlRHS | YamlMap)) (MARGIN START_OF_SEQ_ENTRY "-" entries+=(YamlRHS | YamlMap))* END_OF_SEQ;
 
 YamlRHS:
-	("[" Array) | ("{" Map) | Scalar | YamlSubNode;
+	("[" Array) | ("{" Map) | YamlAnchorRef | Scalar | YamlSubNode;
 
 Array:
 	{Array} ((entries+=YamlRHS) ("," entries+=YamlRHS)*)? "]";
@@ -96,7 +104,7 @@ Array:
 Map:
 	{Map} ((entries+=MapEntry) ("," entries+=MapEntry)*)? "}";
 
-MapEntry returns StringToTypedValueMapEntry:
+MapEntry:
 	key=KEY_STR ":" value=YamlRHS;
 
 Scalar:

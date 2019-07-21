@@ -4,6 +4,8 @@
 package org.ezyaml.lang.tosca.jvmmodel
 
 import com.google.inject.Inject
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 import org.eclipse.xtext.common.types.JvmDeclaredType
 import org.eclipse.xtext.common.types.JvmTypeReference
 import org.eclipse.xtext.xbase.jvmmodel.AbstractModelInferrer
@@ -15,8 +17,6 @@ import org.ezyaml.lang.tosca.yaml.ToscaType
 import org.ezyaml.lang.tosca.yaml.ToscaTypeMembers
 import org.ezyaml.lang.tosca.yaml.YamlMappingEntry
 import org.ezyaml.lang.tosca.yaml.YamlRHS
-import org.ezyaml.lang.tosca.common.CatalogueResourceURI
-import org.eclipse.xtext.xbase.services.XtypeGrammarAccess.JvmParameterizedTypeReferenceElements
 
 /**
  * <p>Infers a JVM model from the source model.</p> 
@@ -26,10 +26,15 @@ import org.eclipse.xtext.xbase.services.XtypeGrammarAccess.JvmParameterizedTypeR
  */
 class YamlJvmModelInferrer extends AbstractModelInferrer {
 
+	static val baseClassMap = #["Integer", "String", "Boolean", "Long", "Float"].map["java.lang.".concat(it)].
+		toMap([it], [
+			Class.forName(it)
+		])
 	/**
 	 * convenience API to build and initialize JVM types and their members.
 	 */
 	@Inject extension JvmTypesBuilder
+	@Inject extension JvmModelHelper
 
 	/**
 	 * The dispatch method {@code infer} is called for each instance of the
@@ -55,71 +60,98 @@ class YamlJvmModelInferrer extends AbstractModelInferrer {
 	 *            <code>true</code>.
 	 */
 	def dispatch void infer(ToscaType element, IJvmDeclaredTypeAcceptor acceptor, boolean isPreIndexingPhase) {
-		acceptor.accept(element.toClass(element.name)) [
-			// annotations += annotationRef(CatalogueResourceURI, element.eResource.URI.toString)
-			superTypes +=
-				element.entries.filter(ToscaSuperTypeDeclaration)?.map[superType.name]?.map[typeRef(it)].
-					findFirst[true].cloneWithProxies
-			var description = (element.entries.filter(YamlMappingEntry).findFirst[key === "description"]?.
-				value as Scalar)?.stringValue
-			description = if (description !== null)
-				description + ". Specified in : " + element.eResource.URI + " ."
-			else
-				description = "Specified in : " + element.eResource.URI + " ."
-			documentation = description
-			for (m : element.entries.filter(ToscaTypeMembers).map[entries].flatten) {
-				var JvmTypeReference typeref = null
-				val propValues = m.value.filter(YamlRHS)?.map[entries].flatten.filter(YamlMappingEntry)
-				var type = propValues?.filter[key == "type"]?.map[value]?.flatten.filter(Scalar)?.findFirst[true]?.
-					stringValue?.trim()
-				var required = propValues?.filter[key == "required"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
-					true
-				]?.boolValue?.trim()
-				var status = propValues?.filter[key == "status"]?.map[value]?.flatten.filter(Scalar)?.findFirst[true]?.
-					stringValue?.trim()
-				var entry_schema = propValues?.filter[key == "entry_schema"]?.map[value].flatten.filter(YamlRHS).map [
-					entries
-				].flatten.filter(YamlMappingEntry).filter[key == "type"].map[value].flatten.filter(Scalar)?.map [
-					getNormalizedType(stringValue?.trim())
-				].toList
-				var _default = propValues?.filter[key == "default"]?.map[value]?.flatten.filter(Scalar)?.
-					findFirst[true]?.stringValue?.trim()
-				var constraints = propValues?.filter[key == "constraints"]?.map[value]?.flatten.filter(Scalar)?.
-					findFirst[true]?.stringValue?.trim()
-
-				typeref = getNormalizedType(type)
-				if (entry_schema !== null && entry_schema.size > 0) {
-					if (typeref.qualifiedName == "java.util.Map" && entry_schema.size == 1) {
-						entry_schema.add(0, getNormalizedType('java.lang.String'))
-					}
-					typeref = typeRef(typeref.qualifiedName, entry_schema).cloneWithProxies
+		if (!baseClassMap.keySet.filter[it.matches("(?i:.*\\." + element.name + ")")].empty) {
+			acceptor.accept(
+				element.toClass(baseClassMap.keySet.findFirst[it.matches("(?i:.*\\." + element.name + ")")])
+			)
+		} else {
+			acceptor.accept(element.toClass(element.name) [
+				var description = (element.entries.filter(YamlMappingEntry).findFirst[key === "description"]?.
+					value as Scalar)?.stringValue
+				description = if (description !== null)
+					description + ".\nSpecified in :" + element.eResource.URI + "."
+				else
+					description = "Specified in :" + element.eResource.URI + ""
+				documentation = description
+				interface=false
+				var annoParam = newParamList.addStringParam("value", element.name)
+				if (description !== null) {
+					annoParam.addStringParam("description", description)
 				}
-				members += m.toField(m.key, typeref) [
-					documentation = propValues?.filter[key == "description"]?.map[value]?.flatten.filter(Scalar)?.
-						findFirst[true]?.stringValue?.trim()
-				]
-			}
-		]
+				annotations += element.toAnno(
+					typeof(ApiModel),
+					annoParam
+				)
+			], [
+				if (!isPreIndexingPhase) {
+					superTypes += element.entries.filter(ToscaSuperTypeDeclaration)?.map[superType.name]?.map [
+						typeRef(getNormalizedType(it))					
+					].findFirst[true].cloneWithProxies
+					for (m : element.entries.filter(ToscaTypeMembers).map[entries].flatten) {
+						var JvmTypeReference ref = null
+						val propValues = m.value.filter(YamlRHS)?.map[entries].flatten.filter(YamlMappingEntry)
+						var type = propValues?.filter[key == "type"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+							true
+						]?.stringValue?.trim()
+						var required = propValues?.filter[key == "required"]?.map[value]?.flatten.filter(Scalar)?.
+							findFirst [
+								true
+							]?.boolValue?.trim()
+						var status = propValues?.filter[key == "status"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+							true
+						]?.stringValue?.trim()
+						var entry_schema = propValues?.filter[key == "entry_schema"]?.map[value].flatten.filter(
+							YamlRHS).map [
+							entries
+						].flatten.filter(YamlMappingEntry).filter[key == "type"].map[value].flatten.filter(Scalar)?.map [
+							typeRef(getNormalizedType(stringValue?.trim())).cloneWithProxies
+						].toList
+						var _default = propValues?.filter[key == "default"]?.map[value]?.flatten.filter(Scalar)?.
+							findFirst [
+								true
+							]?.stringValue?.trim()
+						var constraints = propValues?.filter[key == "constraints"]?.map[value]?.flatten.filter(Scalar)?.
+							findFirst[true]?.stringValue?.trim()
+
+						ref = typeRef(getNormalizedType(type))
+						if (entry_schema !== null && entry_schema.size > 0) {
+							if (ref.qualifiedName == "java.util.Map" && entry_schema.size == 1) {
+								entry_schema.add(0, typeRef(getNormalizedType('java.lang.String')).cloneWithProxies)
+							}
+							ref = typeRef(ref.qualifiedName, entry_schema)
+						}
+						members += m.toField(m.key, ref) [
+							documentation = propValues?.filter[key == "description"]?.map[value]?.flatten.filter(
+								Scalar)?.findFirst[true]?.stringValue?.trim()
+							var annoParam = newParamList.addStringParam("name", m.key)
+							if(documentation !== null) annoParam.addStringParam("value", documentation)
+							annotations += element.toAnno(typeof(ApiModelProperty), annoParam)
+						]
+					}
+				}
+			])
+		}
 	}
 
-	def private JvmTypeReference getNormalizedType(String typeString) {
-		var type = typeRef('java.lang.Object')
+	def static private String getNormalizedType(String typeString) {
+		var type = 'java.lang.Object'
 		if (typeString !== null) {
+			if (!baseClassMap.keySet.filter[it.matches("(?i:.*\\." + typeString + ")")].empty) {
+				type = baseClassMap.keySet.findFirst[it.matches("(?i:.*\\." + typeString + ")")]
+				return type
+			}
 			type = {
 				switch typeString {
-					case 'string':
-						typeRef('java.lang.String')
-					case typeString.matches('integer|int'):
-						typeRef("java.lang.Integer")
 					case 'list':
-						typeRef("java.util.List")
+						"java.util.List"
 					case 'map':
-						typeRef("java.util.Map")
+						"java.util.Map"
 					default:
-						typeRef(typeString)
+						typeString
 				}
 			}
 		}
-		type.cloneWithProxies
+		return type
 	}
+
 }

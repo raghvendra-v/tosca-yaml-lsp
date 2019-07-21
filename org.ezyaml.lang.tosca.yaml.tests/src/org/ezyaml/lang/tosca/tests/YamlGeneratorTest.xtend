@@ -16,9 +16,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 import org.eclipse.xtext.generator.InMemoryFileSystemAccess
 import org.eclipse.xtext.resource.impl.ResourceDescriptionsProvider
+import org.junit.jupiter.api.Disabled
 
 @ExtendWith(InjectionExtension)
 @InjectWith(YamlInjectorProvider)
+@Disabled
 class YamlGeneratorTest {
 	@Inject
 	ParseHelper<YamlDocument> parseHelper
@@ -1247,7 +1249,7 @@ data_types:
         default: md5''', resource.resourceSet)
 
 		rdp.getResourceDescriptions(result.eResource).exportedObjects.forEach([println("Exported: " + it)])
-		/*injector.getAllBindings().forEach[k, v|println(k + ": " + v)]*/
+		injector.getAllBindings().forEach[k, v|println(k + ": " + v)]
 		Assertions.assertNotNull(result)
 		val errors = result.eResource.errors
 		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')

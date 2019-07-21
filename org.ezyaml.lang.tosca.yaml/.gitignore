@@ -1,0 +1,11 @@
+.gradle
+.settings
+model
+jflex-fragment-*.jar
+gradle/wrapper/gradle-wrapper.jar
+**/src-gen
+**/xtend-gen
+**/target
+**/.project
+plugin.xml_gen
+YamlFlexer.java*

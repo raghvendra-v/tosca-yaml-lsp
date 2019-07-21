@@ -137,10 +137,10 @@
 							<directory>${basedir}/model/generated/</directory>
 						</fileset>
 					</filesets>
-				<!-- Can be removed after first generator execution https://bugs.eclipse.org/bugs/show_bug.cgi?id=480097 -->
+					<!-- Can be removed after first generator execution https://bugs.eclipse.org/bugs/show_bug.cgi?id=480097 -->
 				</configuration>
 			</plugin>
-			</plugins>
+		</plugins>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -195,5 +195,4 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
 </project>

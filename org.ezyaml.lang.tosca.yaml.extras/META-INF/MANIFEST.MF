@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ezyaml-extras
+Bundle-SymbolicName: org.ezyaml.lang.tosca.yaml.extras; singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Automatic-Module-Name: org.ezyaml.tosca.yaml.extras
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-Vendor: http://www.ezyaml.org
+Bundle-ActivationPolicy: lazy
+Export-Package: io.swagger.annotations
