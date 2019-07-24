@@ -6,6 +6,8 @@ package org.ezyaml.lang.tosca.tests
 import com.google.inject.Inject
 import com.google.inject.Injector
 import org.eclipse.xtext.generator.GeneratorDelegate
+import org.eclipse.xtext.generator.InMemoryFileSystemAccess
+import org.eclipse.xtext.resource.impl.ResourceDescriptionsProvider
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
@@ -13,14 +15,12 @@ import org.eclipse.xtext.testing.util.ResourceHelper
 import org.ezyaml.lang.tosca.yaml.YamlDocument
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import org.junit.jupiter.api.^extension.ExtendWith
-import org.eclipse.xtext.generator.InMemoryFileSystemAccess
-import org.eclipse.xtext.resource.impl.ResourceDescriptionsProvider
-import org.junit.jupiter.api.Disabled
 
 @ExtendWith(InjectionExtension)
 @InjectWith(YamlInjectorProvider)
-@Disabled
+@DisabledIfEnvironmentVariable(named="TRAVIS",matches=".*")
 class YamlGeneratorTest {
 	@Inject
 	ParseHelper<YamlDocument> parseHelper
@@ -1255,6 +1255,7 @@ data_types:
 		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
 
 		val fsa = new InMemoryFileSystemAccess()
+		//underTest.doGenerate(result.eResource, fsa)
 		underTest.doGenerate(result.eResource, fsa)
 		println(fsa.allFiles)
 

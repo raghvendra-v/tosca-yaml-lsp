@@ -17,6 +17,8 @@ import org.ezyaml.lang.tosca.yaml.ToscaType
 import org.ezyaml.lang.tosca.yaml.ToscaTypeMembers
 import org.ezyaml.lang.tosca.yaml.YamlMappingEntry
 import org.ezyaml.lang.tosca.yaml.YamlRHS
+import com.google.common.base.Function
+import java.util.List
 
 /**
  * <p>Infers a JVM model from the source model.</p> 
@@ -26,10 +28,60 @@ import org.ezyaml.lang.tosca.yaml.YamlRHS
  */
 class YamlJvmModelInferrer extends AbstractModelInferrer {
 
-	static val baseClassMap = #["Integer", "String", "Boolean", "Long", "Float"].map["java.lang.".concat(it)].
-		toMap([it], [
-			Class.forName(it)
-		])
+	static val baseClassMap = (#["Integer", "String", "Boolean", "Long", "Float"].map["java.lang.".concat(it)] +
+		#["Map", "List"].map["java.util.".concat(it)]).toMap([it], [
+		Class.forName(it)
+	])
+	static val preIndexingFeatureMapForType = #[
+		'description' -> new Function<ToscaType, String>() {
+			override String apply(ToscaType element) {
+				(element.entries.filter(YamlMappingEntry).findFirst[key === "description"]?.value as Scalar)?.
+					stringValue
+			}
+		}
+	]
+
+	static val featureMapForType = #[
+		'description' -> new Function<ToscaType, String>() {
+			override String apply(ToscaType element) {
+				(element.entries.filter(YamlMappingEntry).findFirst[key === "description"]?.value as Scalar)?.
+					stringValue
+			}
+		}
+	]
+	static val featureMapForTypeMembers = #[
+		'type' -> new Function<Iterable<YamlMappingEntry>, String>() {
+			override String apply(Iterable<YamlMappingEntry> propValues) {
+				propValues?.filter[key == "type"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+					true
+				]?.stringValue?.trim()
+			}
+		},
+		'required' -> new Function<Iterable<YamlMappingEntry>, String>() {
+			override String apply(Iterable<YamlMappingEntry> propValues) {
+				propValues?.filter[key == "required"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+					true
+				]?.boolValue?.trim()
+			}
+		},
+		'status' -> new Function<Iterable<YamlMappingEntry>, String>() {
+			override String apply(Iterable<YamlMappingEntry> propValues) {
+				propValues?.filter[key == "status"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+					true
+				]?.stringValue?.trim()
+			}
+		},
+		'entry_schema' -> new Function<Iterable<YamlMappingEntry>, List<String>>() {
+			override List<String> apply(Iterable<YamlMappingEntry> propValues) {
+				propValues?.filter[key == "entry_schema"]?.map[value].flatten.filter(YamlRHS).map [
+					entries
+				].flatten.filter(YamlMappingEntry).filter[key == "type"].map[value].flatten.filter(Scalar).map [
+					stringValue?.trim()
+				].toList
+			}
+		}
+	]
+
 	/**
 	 * convenience API to build and initialize JVM types and their members.
 	 */
@@ -73,7 +125,7 @@ class YamlJvmModelInferrer extends AbstractModelInferrer {
 				else
 					description = "Specified in :" + element.eResource.URI + ""
 				documentation = description
-				interface=false
+				interface = false
 				var annoParam = newParamList.addStringParam("value", element.name)
 				if (description !== null) {
 					annoParam.addStringParam("description", description)
@@ -85,7 +137,7 @@ class YamlJvmModelInferrer extends AbstractModelInferrer {
 			], [
 				if (!isPreIndexingPhase) {
 					superTypes += element.entries.filter(ToscaSuperTypeDeclaration)?.map[superType.name]?.map [
-						typeRef(getNormalizedType(it))					
+						typeRef(getNormalizedType(it))
 					].findFirst[true].cloneWithProxies
 					for (m : element.entries.filter(ToscaTypeMembers).map[entries].flatten) {
 						var JvmTypeReference ref = null
@@ -139,16 +191,6 @@ class YamlJvmModelInferrer extends AbstractModelInferrer {
 			if (!baseClassMap.keySet.filter[it.matches("(?i:.*\\." + typeString + ")")].empty) {
 				type = baseClassMap.keySet.findFirst[it.matches("(?i:.*\\." + typeString + ")")]
 				return type
-			}
-			type = {
-				switch typeString {
-					case 'list':
-						"java.util.List"
-					case 'map':
-						"java.util.Map"
-					default:
-						typeString
-				}
 			}
 		}
 		return type
