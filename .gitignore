@@ -1,6 +1,4 @@
 .gradle
-.settings
-**/.classpath
 **/bin
 **/build
 gradle/wrapper/gradle-wrapper.jar
@@ -8,6 +6,4 @@ gradle/wrapper/gradle-wrapper.jar
 **/xtend-gen
 **/target
 **/.project
-org.ezyaml.lang.tosca.yaml.tests/src/org/ezyaml/lang/tosca/tests/YamlParsingTest.xtend
-org.ezyaml.lang.tosca.yaml.tests/Vcpeinfra09
 **/plugin.xml_gen

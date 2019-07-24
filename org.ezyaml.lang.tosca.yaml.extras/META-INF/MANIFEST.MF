@@ -7,4 +7,5 @@ Automatic-Module-Name: org.ezyaml.tosca.yaml.extras
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-Vendor: http://www.ezyaml.org
 Bundle-ActivationPolicy: lazy
-Export-Package: io.swagger.annotations
+Export-Package: io.swagger.annotations,
+ org.neo4j.ogm.annotation

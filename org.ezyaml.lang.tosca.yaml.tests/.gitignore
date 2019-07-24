@@ -1,0 +1,8 @@
+.gradle
+.settings
+src-gen
+xtend-gen
+target
+.project
+Vcpeinfra09
+**/YamlGeneratorTest.xtend
