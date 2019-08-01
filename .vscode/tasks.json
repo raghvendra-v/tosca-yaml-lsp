@@ -7,11 +7,11 @@
             "label": "generateXtext",
             "type": "shell",
             "command": "mvn -o generate-sources -pl org.ezyaml.lang.tosca.yaml",
-            "options": {
+            /*"options": {
                 "env": {
                     "PATH": "%PATH%;C:\\workspace\\maven\\bin;C:\\workspace\\gradle\\bin"
                 }
-            },
+            },*/
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -26,11 +26,11 @@
             "label": "cleanGenerate",
             "type": "shell",
             "command": "mvn clean install",
-            "options": {
+            /*"options": {
                 "env": {
                     "PATH": "%PATH%;C:\\workspace\\maven\\bin;C:\\workspace\\gradle\\bin"
                 }
-            },
+            },*/
             "group": "build",
             "presentation": {
                 "clear": true,
@@ -42,11 +42,11 @@
             "label": "test",
             "type": "shell",
             "command": "java -ea -jar C:\\Users\\607058220\\.m2\\repository\\org\\junit\\platform\\junit-platform-console-standalone\\1.0.0\\junit-platform-console-standalone-1.0.0.jar -cp C:\\workspace\\eclipse\\plugins\\org.junit.jupiter.api_5.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.jupiter.engine_5.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.jupiter.migrationsupport_5.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.jupiter.params_5.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.platform.commons_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.platform.engine_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.platform.launcher_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.platform.runner_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.platform.suite.api_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit.vintage.engine_4.12.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.opentest4j_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.apiguardian_1.0.0.v20170910-2246.jar;C:\\workspace\\eclipse\\plugins\\org.junit_4.12.0.v201504281640\\junit.jar;C:\\workspace\\eclipse\\plugins\\org.hamcrest.core_1.3.0.v201303031735.jar -cp .;org.tosca.yaml\\target\\classes --scan-class-path org.ezyaml.lang.tosca.yaml.tests\\target\\classes org.tosca.tests.YamlParsingTest",
-            "options": {
+            /*"options": {
                 "env": {
                     "PATH": "C:\\Program Files\\Java\\jre\\bin;%PATH%;C:\\workspace\\maven\\bin;C:\\workspace\\gradle\\bin"
                 }
-            },
+            },*/
             "group": "test"
         }
     ]

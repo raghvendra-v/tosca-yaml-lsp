@@ -28,7 +28,7 @@
 						<goals>
 							<goal>java</goal>
 						</goals>
-						<phase>process-test-resources</phase>
+						<phase>test-compile</phase>
 					</execution>
 				</executions>
 				<configuration>
@@ -91,7 +91,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute></execute>
+										<ignore></ignore>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>

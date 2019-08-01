@@ -64,7 +64,7 @@ class vCPEInfra09_BulkParserTest {
 	}
 
 	def static List<Arguments> getFiles() {
-		configFilePaths.map([new File(it)]).forEach[println("Loading: "+it.absolutePath)]
+		configFilePaths.map([new File(it)]).forEach[println("Loading: " + it.absolutePath)]
 		val List<Path> paths = newArrayList()
 		configFilePaths.forEach [ configFilePath |
 			paths.addAll((Files.walk(Paths.get(configFilePath)).collect(Collectors.toList())))
@@ -84,8 +84,6 @@ class vCPEInfra09_BulkParserTest {
 			var r = parseHelper.parse(new String(Files.readAllBytes(p)), URI.createURI(fileName), resourceSet)
 			System.setOut(original)
 			Assertions.assertNotNull(r)
-			var errors = r.eResource.errors
-			Assertions.assertTrue(errors.isEmpty, '''Errors while parsing «p.toString»: «errors.join("\n\t")»''')
 		} catch (Throwable t) {
 			System.setOut(original)
 			fail('''Error while parsing «p.toString»: «t.message»''', t)
@@ -102,6 +100,8 @@ class vCPEInfra09_BulkParserTest {
 		for (r : resourceList) {
 			try {
 				println(r.URI)
+				var errors = r.errors
+				Assertions.assertTrue(errors.isEmpty, '''Errors while parsing «r.URI»: «errors.join("\n\t")»''')
 				underTest.doGenerate(r, fsa)
 			} catch (Throwable t) {
 				println('''Error while parsing «r.URI»''')
@@ -112,6 +112,6 @@ class vCPEInfra09_BulkParserTest {
 
 	@AfterAll
 	def void printGenrated() {
-		println("Listing files:\n"+fsa.allFiles)
+		println("Listing files:\n" + fsa.allFiles)
 	}
 }

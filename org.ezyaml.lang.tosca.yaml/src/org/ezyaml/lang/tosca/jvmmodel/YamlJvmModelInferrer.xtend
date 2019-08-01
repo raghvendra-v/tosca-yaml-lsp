@@ -134,54 +134,49 @@ class YamlJvmModelInferrer extends AbstractModelInferrer {
 					typeof(ApiModel),
 					annoParam
 				)
-			], [
-				if (!isPreIndexingPhase) {
-					superTypes += element.entries.filter(ToscaSuperTypeDeclaration)?.map[superType.name]?.map [
-						typeRef(getNormalizedType(it))
-					].findFirst[true].cloneWithProxies
-					for (m : element.entries.filter(ToscaTypeMembers).map[entries].flatten) {
-						var JvmTypeReference ref = null
-						val propValues = m.value.filter(YamlRHS)?.map[entries].flatten.filter(YamlMappingEntry)
-						var type = propValues?.filter[key == "type"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
-							true
-						]?.stringValue?.trim()
-						var required = propValues?.filter[key == "required"]?.map[value]?.flatten.filter(Scalar)?.
-							findFirst [
-								true
-							]?.boolValue?.trim()
-						var status = propValues?.filter[key == "status"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
-							true
-						]?.stringValue?.trim()
-						var entry_schema = propValues?.filter[key == "entry_schema"]?.map[value].flatten.filter(
-							YamlRHS).map [
-							entries
-						].flatten.filter(YamlMappingEntry).filter[key == "type"].map[value].flatten.filter(Scalar)?.map [
-							typeRef(getNormalizedType(stringValue?.trim())).cloneWithProxies
-						].toList
-						var _default = propValues?.filter[key == "default"]?.map[value]?.flatten.filter(Scalar)?.
-							findFirst [
-								true
-							]?.stringValue?.trim()
-						var constraints = propValues?.filter[key == "constraints"]?.map[value]?.flatten.filter(Scalar)?.
-							findFirst[true]?.stringValue?.trim()
+				superTypes += element.entries.filter(ToscaSuperTypeDeclaration)?.map[superType.name]?.map [
+					typeRef(getNormalizedType(it)).cloneWithProxies
+				].findFirst[true]
+			]) [
+				for (m : element.entries.filter(ToscaTypeMembers).map[entries].flatten) {
+					var JvmTypeReference ref = null
+					val propValues = m.value.filter(YamlRHS)?.map[entries].flatten.filter(YamlMappingEntry)
+					var type = propValues?.filter[key == "type"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+						true
+					]?.stringValue?.trim()
+					var required = propValues?.filter[key == "required"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+						true
+					]?.boolValue?.trim()
+					var status = propValues?.filter[key == "status"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+						true
+					]?.stringValue?.trim()
+					var entry_schema = propValues?.filter[key == "entry_schema"]?.map[value].flatten.filter(YamlRHS).map [
+						entries
+					].flatten.filter(YamlMappingEntry).filter[key == "type"].map[value].flatten.filter(Scalar)?.map [
+						typeRef(getNormalizedType(stringValue?.trim())).cloneWithProxies
+					].toList
+					var _default = propValues?.filter[key == "default"]?.map[value]?.flatten.filter(Scalar)?.findFirst [
+						true
+					]?.stringValue?.trim()
+					var constraints = propValues?.filter[key == "constraints"]?.map[value]?.flatten.filter(Scalar)?.
+						findFirst[true]?.stringValue?.trim()
 
-						ref = typeRef(getNormalizedType(type))
-						if (entry_schema !== null && entry_schema.size > 0) {
-							if (ref.qualifiedName == "java.util.Map" && entry_schema.size == 1) {
-								entry_schema.add(0, typeRef(getNormalizedType('java.lang.String')).cloneWithProxies)
-							}
-							ref = typeRef(ref.qualifiedName, entry_schema)
+					ref = typeRef(getNormalizedType(type))
+					if (entry_schema !== null && entry_schema.size > 0) {
+						if (ref.qualifiedName == "java.util.Map" && entry_schema.size == 1) {
+							entry_schema.add(0, typeRef(getNormalizedType('java.lang.String')).cloneWithProxies)
 						}
-						members += m.toField(m.key, ref) [
-							documentation = propValues?.filter[key == "description"]?.map[value]?.flatten.filter(
-								Scalar)?.findFirst[true]?.stringValue?.trim()
-							var annoParam = newParamList.addStringParam("name", m.key)
-							if(documentation !== null) annoParam.addStringParam("value", documentation)
-							annotations += element.toAnno(typeof(ApiModelProperty), annoParam)
-						]
+						ref = typeRef(ref.qualifiedName, entry_schema)
 					}
+					members += m.toField(m.key, ref) [
+						documentation = propValues?.filter[key == "description"]?.map[value]?.flatten.filter(Scalar)?.
+							findFirst[true]?.stringValue?.trim()
+						var annoParam = newParamList.addStringParam("name", m.key)
+						if(documentation !== null) annoParam.addStringParam("value", documentation)
+						annotations += element.toAnno(typeof(ApiModelProperty), annoParam)
+					]
 				}
-			])
+			]
 		}
 	}
 
