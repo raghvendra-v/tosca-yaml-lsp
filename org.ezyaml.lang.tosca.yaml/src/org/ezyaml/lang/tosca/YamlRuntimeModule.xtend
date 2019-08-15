@@ -4,10 +4,12 @@
 package org.ezyaml.lang.tosca
 
 import org.eclipse.xtext.conversion.IValueConverterService
+import org.eclipse.xtext.resource.IResourceDescription
 import org.eclipse.xtext.scoping.IGlobalScopeProvider
 import org.eclipse.xtext.scoping.impl.ImportUriGlobalScopeProvider
 import org.ezyaml.lang.tosca.converters.Yaml2XtextTerminalConverters
 import org.ezyaml.lang.tosca.parser.antlr.lexer.jflex.JFlexBasedEOFAwareYamlLexer
+import org.ezyaml.lang.tosca.scoping.YamlResourceDescriptionManager
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
@@ -26,6 +28,11 @@ class YamlRuntimeModule extends AbstractYamlRuntimeModule {
 	override Class<? extends IValueConverterService> bindIValueConverterService() {
 		Yaml2XtextTerminalConverters
 	}
+	
+	override Class<? extends IResourceDescription.Manager> bindIResourceDescription$Manager() {
+		return YamlResourceDescriptionManager;
+	}
+	
 /* 
 	def Class<? extends AbstractFileSystemAccess2> bindAbstractFileSystemAccess2() {
 		return JavaIoFileSystemAccess;
