@@ -16,6 +16,9 @@ It features
  + [ ] OpenAPI decorators in the generated POJO's to help exposure using spring-boot APIs
  + [ ] OGM annotations in the generated POJO's for mapping to a graph DB ( neo4j ) , support for spring-boot REST repository
  
+ [![TOSCA EDITOR DEMO](https://github.com/raghvendra-v/content/blob/710ef34cbea8c287055c8f217b7e3a6654e5471a/tosca-editor-logo.png)](https://www.youtube.com/watch?v=ul-exeEHCQY "Tosca Editor in eclipse")
+ 
+ 
 known issues in YAML parsing
  + Best to have a blank newline at the end of file, although it should work most of the time without them 
  + multiple documents (--- and ... markers);
